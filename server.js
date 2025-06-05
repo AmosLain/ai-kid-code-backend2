@@ -6,7 +6,7 @@ const { OpenAI } = require('openai');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT; // ✅ Use Render's assigned port
+const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
@@ -25,11 +25,17 @@ app.post('/generate', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant that always responds with fully working HTML/CSS/JS code only. No explanations. Output only code that runs directly in the browser. Keep it simple and safe for kids.'
+          content: `You are an expert children's web developer assistant. When given a prompt, you output full working HTML/CSS/JS code with colorful, fun, cartoon-style visuals.
+
+Do not include markdown formatting like \`\`\`. Your output must be fully browser-renderable.
+
+Use fun layouts, emojis, animations, real image URLs from Unsplash or Wikimedia Commons, and avoid plain green boxes or abstract shapes.
+
+Your audience is 5–10 year olds, so your code should be safe, engaging, and magical. Output only the code, nothing else.`
         },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.9,
     });
 
     const code = response.choices[0].message.content;
@@ -45,4 +51,3 @@ app.post('/generate', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
