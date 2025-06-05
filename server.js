@@ -6,8 +6,7 @@ const { OpenAI } = require('openai');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
-
+const PORT = process.env.PORT; // ✅ Render assigns this
 
 app.use(cors());
 app.use(express.json());
@@ -18,7 +17,6 @@ const openai = new OpenAI({
 
 app.post('/generate', async (req, res) => {
   const { prompt } = req.body;
-
   if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
 
   try {
@@ -29,30 +27,25 @@ app.post('/generate', async (req, res) => {
           role: 'system',
           content: 'You are a helpful assistant that always responds with fully working HTML/CSS/JS code only. No explanations. Output only code that runs directly in the browser. Keep it simple and safe for kids.'
         },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'user', content: prompt }
       ],
       temperature: 0.7,
     });
 
     const code = response.choices[0].message.content;
-
-    // Log raw AI response for debugging
-    console.log('🧠 AI raw output:\n', code);
-
+    console.log("🧠 AI Response:\n", code);
     res.json({ code });
 
   } catch (err) {
-    console.error('❌ OpenAI error:', err.message || err);
+    console.error('🔥 OpenAI backend crash:', err.response?.data || err.message || err);
     res.status(500).json({ error: 'Failed to generate code' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 app.listen(PORT, () => {
