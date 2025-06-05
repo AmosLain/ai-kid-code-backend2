@@ -11,10 +11,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 app.post('/generate', async (req, res) => {
   const { prompt } = req.body;
@@ -22,7 +21,7 @@ app.post('/generate', async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
 
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         { role: 'system', content: 'You are a helpful assistant that writes simple HTML/CSS/JS code for kids. Keep code clean and safe.' },
@@ -31,7 +30,7 @@ app.post('/generate', async (req, res) => {
       temperature: 0.7,
     });
 
-    const code = response.data.choices[0].message.content;
+    const code = response.choices[0].message.content;
     res.json({ code });
 
   } catch (err) {
