@@ -1,53 +1,63 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { OpenAI } = require('openai');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EnterHere - AI Page Builder</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f0f8ff;
+      text-align: center;
+    }
+    textarea {
+      width: 80%;
+      height: 100px;
+      font-size: 16px;
+      padding: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    iframe {
+      width: 100%;
+      height: 400px;
+      margin-top: 2rem;
+      border: 1px solid #ccc;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Build a Page with AI</h1>
+  <p>Write what you want, and AI will turn it into a real web page!</p>
+  <textarea id="prompt" placeholder="Try: Make a pink dinosaur page with a button"></textarea><br>
+  <button onclick="generate()">Generate Page</button>
+  <iframe id="preview"></iframe>
 
-dotenv.config();
+  <script>
+    async function generate() {
+      const prompt = document.getElementById('prompt').value;
+      const preview = document.getElementById('preview');
+      preview.srcdoc = "Loading...";
 
-const app = express();
-const PORT = process.env.PORT;
+      const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
 
-app.use(cors());
-app.use(express.json());
+      const data = await res.json();
+      preview.srcdoc = data.code || "<h2>Something went wrong</h2>";
+    }
+  </script>
+</body>
+</html>
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-app.post('/generate', async (req, res) => {
-  const { prompt } = req.body;
-  if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert children's web developer assistant. When given a prompt, you output full working HTML/CSS/JS code with colorful, fun, cartoon-style visuals.
-
-Do not include markdown formatting like \`\`\`. Your output must be fully browser-renderable.
-
-Use fun layouts, emojis, animations, real image URLs from Unsplash or Wikimedia Commons, and avoid plain green boxes or abstract shapes.
-
-Your audience is 5–10 year olds, so your code should be safe, engaging, and magical. Output only the code, nothing else.`
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.9,
-    });
-
-    const code = response.choices[0].message.content;
-    console.log("🧠 AI Response:\n", code);
-    res.json({ code });
-
-  } catch (err) {
-    console.error('🔥 OpenAI backend crash:', err.response?.data || err.message || err);
-    res.status(500).json({ error: 'Failed to generate code' });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
