@@ -48,18 +48,17 @@
       const preview = document.getElementById('preview');
       preview.srcdoc = "Loading...";
 
-      const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
+     const data = await res.json();
+console.log("📦 Backend Response:", data);
 
-      const data = await res.json();
+if (data.code) {
+  // Optional: Replace broken image paths
+  data.code = data.code.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"');
+  preview.srcdoc = data.code;
+} else {
+  preview.srcdoc = "<h2>Something went wrong (no code returned)</h2>";
+}
 
-      // Replace any broken image URLs with a placeholder kitten image
-      data.code = data.code.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"');
-
-      preview.srcdoc = data.code || "<h2>Something went wrong</h2>";
     }
   </script>
 </body>
