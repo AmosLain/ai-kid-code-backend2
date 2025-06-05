@@ -48,16 +48,12 @@
       const preview = document.getElementById('preview');
       preview.srcdoc = "Loading...";
 
-     const data = await res.json();
-console.log("📦 Backend Response:", data);
+ const data = await res.json();
+let raw = data.code || '';
+raw = raw.replace(/```(html)?/gi, '').trim(); // Strip markdown fences
+raw = raw.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"'); // Fix broken images
+preview.srcdoc = raw || "<h2>Something went wrong</h2>";
 
-if (data.code) {
-  // Optional: Replace broken image paths
-  data.code = data.code.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"');
-  preview.srcdoc = data.code;
-} else {
-  preview.srcdoc = "<h2>Something went wrong (no code returned)</h2>";
-}
 
     }
   </script>
