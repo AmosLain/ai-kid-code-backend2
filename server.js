@@ -3,7 +3,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 
-
 dotenv.config();
 
 const app = express();
@@ -25,20 +24,35 @@ app.post('/generate', async (req, res) => {
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
-        { role: 'system', content: 'You are a helpful assistant that writes simple HTML/CSS/JS code for kids. Keep code clean and safe.' },
-        { role: 'user', content: prompt }
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that always responds with fully working HTML/CSS/JS code only. No explanations. Output only code that runs directly in the browser. Keep it simple and safe for kids.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
       ],
       temperature: 0.7,
     });
 
     const code = response.choices[0].message.content;
+
+    // Log raw AI response for debugging
+    console.log('🧠 AI raw output:\n', code);
+
     res.json({ code });
 
   } catch (err) {
-    console.error('OpenAI error:', err);
+    console.error('❌ OpenAI error:', err.message || err);
     res.status(500).json({ error: 'Failed to generate code' });
   }
 });
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
