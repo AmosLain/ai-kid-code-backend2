@@ -6,7 +6,7 @@ const { OpenAI } = require('openai');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT; // ✅ Render assigns this
+const PORT = process.env.PORT; // ✅ Use Render's assigned port
 
 app.use(cors());
 app.use(express.json());
@@ -46,8 +46,3 @@ app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
 
-
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
