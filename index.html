@@ -2,61 +2,220 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>EnterHere - AI Page Builder</title>
+  <title>EnterHere - AI Art Playground</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Comic+Neue&display=swap" rel="stylesheet">
+
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Baloo 2', cursive;
+      background: #fafafa;
+      margin: 0;
       padding: 2rem;
-      background: #f0f8ff;
       text-align: center;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+      font-size: 2.5rem;
+      color: #1e88e5;
+    }
+    p.subtitle {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 1.5rem;
     }
     textarea {
       width: 80%;
-      height: 100px;
-      font-size: 16px;
-      padding: 1rem;
+      max-width: 600px;
+      height: 80px;
+      font-family: 'Comic Neue', sans-serif;
+      font-size: 1rem;
+      padding: 0.8rem;
+      border: 2px solid #1e88e5;
+      border-radius: 8px;
+      resize: none;
+    }
+    button, input[type="radio"] + label {
+      font-family: 'Comic Neue', sans-serif;
     }
     button {
-      margin-top: 1rem;
-      padding: 10px 20px;
-      font-size: 18px;
+      margin: 1rem 0.5rem 1rem 0;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
       cursor: pointer;
-      background: #007bff;
+      background: #1e88e5;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background 0.3s;
     }
-    iframe {
+    button:hover {
+      background: #1565c0;
+    }
+    .preset-container {
+      margin: 1rem 0;
+    }
+    .preset-button {
+      background: #ff6f00;
+      margin: 0.3rem;
+    }
+    .preset-button:hover {
+      background: #e65100;
+    }
+    #loader {
+      display: none;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    #loader p {
+      font-size: 1.2rem;
+      color: #1e88e5;
+    }
+    #loader img {
+      width: 50px;
+      margin-top: 0.5rem;
+    }
+    #preview {
       width: 100%;
-      height: 400px;
-      margin-top: 2rem;
-      border: 1px solid #ccc;
-      background: white;
+      height: 500px;
+      border: none;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    #downloadBtn {
+      display: none;
+      margin: 1rem auto;
+      padding: 0.6rem 1.2rem;
+      background: #43a047;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background 0.3s;
+    }
+    #downloadBtn:hover {
+      background: #2e7d32;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 0.8rem;
+      font-size: 1rem;
+      color: #1e88e5;
+      text-decoration: none;
+    }
+    .size-toggle {
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+    .size-toggle input {
+      margin-right: 0.3rem;
     }
   </style>
 </head>
 <body>
-  <h1>🎨 Build a Page with AI</h1>
-  <p>Write what you want, and AI will turn it into a real web page!</p>
-  <textarea id="prompt" placeholder="Try: Make a pink dinosaur page with a button"></textarea><br>
+  <h1>EnterHere.ai</h1>
+  <p class="subtitle">A magical AI art playground just for kids! ✨</p>
+
+  <!-- 1) Prompt Input -->
+  <textarea id="prompt" placeholder="Write something like: 'A smiling unicorn dancing on a rainbow'"></textarea><br>
   <button onclick="generate()">Generate Page</button>
-  <iframe id="preview"></iframe>
+
+  <!-- 2) Preset Buttons -->
+  <div class="preset-container">
+    <button class="preset-button" onclick="usePreset('A rainbow unicorn dancing on a rainbow')">🌈 Rainbow Unicorn</button>
+    <button class="preset-button" onclick="usePreset('A space robot exploring a candy planet')">🚀 Space Robot</button>
+    <button class="preset-button" onclick="usePreset('A playful panda floating on a cloud')">🐼 Panda Cloud</button>
+  </div>
+
+  <!-- 3) Size Toggle -->
+  <div class="size-toggle">
+    <input type="radio" id="size512" name="size" value="512x512" checked>
+    <label for="size512">Fast (512×512)</label>
+    &nbsp;&nbsp;
+    <input type="radio" id="size1024" name="size" value="1024x1024">
+    <label for="size1024">Detailed (1024×1024)</label>
+  </div>
+
+  <!-- 4) Loader Animation -->
+  <div id="loader">
+    <p>🎨 AI is painting your masterpiece…</p>
+    <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading spinner">
+  </div>
+
+  <!-- 5) Preview Iframe -->
+  <iframe id="preview" srcdoc="<h2 style='text-align:center;color:#777;'>Your image will appear here.</h2>"></iframe>
+
+  <!-- 6) Download Button & Link -->
+  <button id="downloadBtn" onclick="downloadCreation()">📥 Download My Page</button>
+  <a id="downloadLink" href="#" download="my_ai_creation.html">Click here to save your creation!</a>
 
   <script>
+    // Use a preset prompt, then generate immediately
+    function usePreset(text) {
+      document.getElementById('prompt').value = text;
+      generate();
+    }
+
     async function generate() {
-      const prompt = document.getElementById('prompt').value;
-      const preview = document.getElementById('preview');
-      preview.srcdoc = "Loading...";
+      const promptText = document.getElementById('prompt').value.trim();
+      if (!promptText) {
+        alert("Please enter a prompt or use a preset button.");
+        return;
+      }
 
- const data = await res.json();
-let raw = data.code || '';
-raw = raw.replace(/```(html)?/gi, '').trim(); // Strip markdown fences
-raw = raw.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"'); // Fix broken images
-preview.srcdoc = raw || "<h2>Something went wrong</h2>";
+      // Show loader, hide iframe + download button
+      document.getElementById('loader').style.display = 'block';
+      document.getElementById('preview').style.display = 'none';
+      document.getElementById('downloadBtn').style.display = 'none';
+      document.getElementById('downloadLink').style.display = 'none';
 
+      // Get selected size
+      const sizeRadios = document.getElementsByName('size');
+      let selectedSize = '512x512';
+      for (const r of sizeRadios) {
+        if (r.checked) {
+          selectedSize = r.value;
+          break;
+        }
+      }
 
+      try {
+        const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptText, size: selectedSize })
+        });
+        const data = await res.json();
+
+        // Hide loader, show iframe with returned HTML
+        document.getElementById('loader').style.display = 'none';
+        const iframe = document.getElementById('preview');
+        iframe.style.display = 'block';
+        iframe.srcdoc = data.code;
+
+        // Show download button now that iframe has srcdoc
+        document.getElementById('downloadBtn').style.display = 'inline-block';
+      } catch (err) {
+        document.getElementById('loader').style.display = 'none';
+        const iframe = document.getElementById('preview');
+        iframe.style.display = 'block';
+        iframe.srcdoc = `<h2 style="color:red; text-align:center;">Error fetching image</h2><pre style="white-space:pre-wrap;">${err.message}</pre>`;
+      }
+    }
+
+    function downloadCreation() {
+      const iframe = document.getElementById('preview');
+      const htmlContent = iframe.srcdoc;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.getElementById('downloadLink');
+      link.href = url;
+      link.style.display = 'block';
     }
   </script>
 </body>
 </html>
-
