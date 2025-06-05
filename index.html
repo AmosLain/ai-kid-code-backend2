@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>EnterHere - AI Art Playground</title>
+  <title>EnterHere.ai</title>
+  <!-- Load two kid-friendly fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Comic+Neue&display=swap" rel="stylesheet">
 
   <style>
@@ -114,35 +115,50 @@
     .size-toggle input {
       margin-right: 0.3rem;
     }
+
+    /* Responsive tweaks for mobile */
+    @media (max-width: 600px) {
+      textarea {
+        width: 95%;
+        height: 60px;
+      }
+      button {
+        width: 80%;
+        font-size: 1.1rem;
+      }
+      #preview {
+        height: 300px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>EnterHere.vip</h1>
-  <p class="subtitle">A magical AI art playground just for kids! ✨</p>
+  <h1 id="title">EnterHere.ai</h1>
+  <p class="subtitle" id="subtitle">A magical AI art playground just for kids! ✨</p>
 
   <!-- 1) Prompt Input -->
-  <textarea id="prompt" placeholder="Write something like: 'A strong lion facing the sun'"></textarea><br>
-  <button onclick="generate()">Generate Page</button>
+  <textarea id="prompt" placeholder="Write something like: 'A smiling unicorn dancing on a rainbow'"></textarea><br>
+  <button id="generateBtn">Generate Page</button>
 
   <!-- 2) Preset Buttons -->
   <div class="preset-container">
-    <button class="preset-button" onclick="usePreset('A blue whale diving deep in the sea')">blue whale</button>
-    <button class="preset-button" onclick="usePreset('A  robot exploring a candy planet')">🚀 Space Robot</button>
-    <button class="preset-button" onclick="usePreset('A playful panda floating on a cloud')">🐼 Panda Cloud</button>
+    <button class="preset-button" data-preset="A rainbow unicorn dancing on a rainbow">🌈 Rainbow Unicorn</button>
+    <button class="preset-button" data-preset="A space robot exploring a candy planet">🚀 Space Robot</button>
+    <button class="preset-button" data-preset="A playful panda floating on a cloud">🐼 Panda Cloud</button>
   </div>
 
   <!-- 3) Size Toggle -->
   <div class="size-toggle">
     <input type="radio" id="size512" name="size" value="512x512" checked>
-    <label for="size512">Fast (512×512)</label>
+    <label for="size512" id="labelFast">Fast (512×512)</label>
     &nbsp;&nbsp;
     <input type="radio" id="size1024" name="size" value="1024x1024">
-    <label for="size1024">Detailed (1024×1024)</label>
+    <label for="size1024" id="labelDetailed">Detailed (1024×1024)</label>
   </div>
 
   <!-- 4) Loader Animation -->
   <div id="loader">
-    <p>🎨 AI is painting your masterpiece…</p>
+    <p id="loadingText">🎨 AI is painting your masterpiece…</p>
     <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading spinner">
   </div>
 
@@ -150,20 +166,84 @@
   <iframe id="preview" srcdoc="<h2 style='text-align:center;color:#777;'>Your image will appear here.</h2>"></iframe>
 
   <!-- 6) Download Button & Link -->
-  <button id="downloadBtn" onclick="downloadCreation()">📥 Download My Page</button>
+  <button id="downloadBtn">📥 <span id="downloadText">Download My Page</span></button>
   <a id="downloadLink" href="#" download="my_ai_creation.html">Click here to save your creation!</a>
 
   <script>
-    // Use a preset prompt, then generate immediately
-    function usePreset(text) {
-      document.getElementById('prompt').value = text;
-      generate();
-    }
+    // -------------- TRANSLATIONS OBJECT --------------
+    // Support English, Hebrew, Spanish, French. Fallback to English for other codes.
+    const translations = {
+      en: {
+        title: "EnterHere.ai",
+        subtitle: "A magical AI art playground just for kids! ✨",
+        placeholder: "Write something like: 'A smiling unicorn dancing on a rainbow'",
+        generateBtn: "Generate Page",
+        labelFast: "Fast (512×512)",
+        labelDetailed: "Detailed (1024×1024)",
+        loadingText: "🎨 AI is painting your masterpiece…",
+        downloadText: "Download My Page"
+      },
+      he: {
+        title: "אנטרהיר.אי-אי",
+        subtitle: "גן שעשועים קסום לילדים! ✨",
+        placeholder: "כתוב משהו כמו: 'חד קרן מחייך רוקד על קשת בענן'",
+        generateBtn: "צור עמוד",
+        labelFast: "מהיר (512×512)",
+        labelDetailed: "מפואר (1024×1024)",
+        loadingText: "🎨 ה־AI מצייר את היצירה שלך…",
+        downloadText: "הורד את הדף שלי"
+      },
+      es: {
+        title: "EnterHere.ai",
+        subtitle: "¡Un patio de juegos mágico con IA para niños! ✨",
+        placeholder: "Escribe algo como: 'Un unicornio sonriente bailando en un arcoíris'",
+        generateBtn: "Generar Página",
+        labelFast: "Rápido (512×512)",
+        labelDetailed: "Detallado (1024×1024)",
+        loadingText: "🎨 La IA está pintando tu obra maestra…",
+        downloadText: "Descargar mi página"
+      },
+      fr: {
+        title: "EnterHere.ai",
+        subtitle: "Un terrain de jeu IA magique pour les enfants ! ✨",
+        placeholder: "Écrivez quelque chose comme : 'Une licorne souriante dansant sur un arc-en-ciel'",
+        generateBtn: "Générer la page",
+        labelFast: "Rapide (512×512)",
+        labelDetailed: "Détaillé (1024×1024)",
+        loadingText: "🎨 L’IA peint votre chef-d’œuvre…",
+        downloadText: "Télécharger ma page"
+      }
+    };
+
+    // Determine the user's language (e.g. "en", "he", "es", "fr")
+    const userLang = (navigator.language || navigator.userLanguage).split('-')[0];
+    const lang = translations[userLang] ? userLang : 'en';
+
+    // Apply translations to UI elements
+    document.getElementById('title').innerText = translations[lang].title;
+    document.getElementById('subtitle').innerText = translations[lang].subtitle;
+    document.getElementById('prompt').placeholder = translations[lang].placeholder;
+    document.getElementById('generateBtn').innerText = translations[lang].generateBtn;
+    document.getElementById('labelFast').innerText = translations[lang].labelFast;
+    document.getElementById('labelDetailed').innerText = translations[lang].labelDetailed;
+    document.getElementById('loadingText').innerText = translations[lang].loadingText;
+    document.getElementById('downloadText').innerText = translations[lang].downloadText;
+
+    // -------------- GENERATE FUNCTION --------------
+    document.getElementById('generateBtn').addEventListener('click', generate);
 
     async function generate() {
       const promptText = document.getElementById('prompt').value.trim();
       if (!promptText) {
-        alert("Please enter a prompt or use a preset button.");
+        alert(
+          lang === 'he'
+            ? 'אנא הכנס טקסט או לחץ על כפתור מוכן.'
+            : lang === 'es'
+            ? 'Por favor ingresa un texto o usa un botón predeterminado.'
+            : lang === 'fr'
+            ? "Veuillez saisir un texte ou utiliser un bouton prédéfini."
+            : 'Please enter a prompt or use a preset button.'
+        );
         return;
       }
 
@@ -187,7 +267,11 @@
         const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: promptText, size: selectedSize })
+          body: JSON.stringify({
+            prompt: promptText,
+            size: selectedSize,
+            lang: lang
+          })
         });
         const data = await res.json();
 
@@ -203,10 +287,29 @@
         document.getElementById('loader').style.display = 'none';
         const iframe = document.getElementById('preview');
         iframe.style.display = 'block';
-        iframe.srcdoc = `<h2 style="color:red; text-align:center;">Error fetching image</h2><pre style="white-space:pre-wrap;">${err.message}</pre>`;
+        iframe.srcdoc =
+          `<h2 style="color:red; text-align:center;">` +
+          (lang === 'he'
+            ? 'שגיאה בשליפת התמונות'
+            : lang === 'es'
+            ? 'Error al obtener la imagen'
+            : lang === 'fr'
+            ? "Erreur lors de la récupération de l'image"
+            : 'Error fetching image') +
+          `</h2><pre style="white-space:pre-wrap;">${err.message}</pre>`;
       }
     }
 
+    // Preset buttons fill the prompt and immediately call generate()
+    document.querySelectorAll('.preset-button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const text = btn.getAttribute('data-preset');
+        document.getElementById('prompt').value = text;
+        generate();
+      });
+    });
+
+    // -------------- DOWNLOAD FUNCTION --------------
     function downloadCreation() {
       const iframe = document.getElementById('preview');
       const htmlContent = iframe.srcdoc;
@@ -216,6 +319,7 @@
       link.href = url;
       link.style.display = 'block';
     }
+    document.getElementById('downloadBtn').addEventListener('click', downloadCreation);
   </script>
 </body>
 </html>
