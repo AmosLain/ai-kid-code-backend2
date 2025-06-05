@@ -43,20 +43,24 @@
   <iframe id="preview"></iframe>
 
   <script>
-    async function generate() {
-      const prompt = document.getElementById('prompt').value;
-      const preview = document.getElementById('preview');
-      preview.srcdoc = "Loading...";
+  async function generate() {
+    const prompt = document.getElementById('prompt').value;
+    const preview = document.getElementById('preview');
+    preview.srcdoc = "Loading...";
 
-      const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
+    const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
 
-      const data = await res.json();
-      preview.srcdoc = data.code || "<h2>Something went wrong</h2>";
-    }
-  </script>
+    const data = await res.json();
+    // fallback for broken image references
+    data.code = data.code.replace(/src="([^"]+\.(png|jpg|jpeg|gif))"/gi, 'src="https://placekitten.com/300/200"');
+
+    preview.srcdoc = data.code || "<h2>Something went wrong</h2>";
+  }
+</script>
+
 </body>
 </html>
