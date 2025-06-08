@@ -1,5 +1,5 @@
 {
-  "name": "ai-image-generator",
+  "name": "your-app-name",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -13,4 +13,3 @@
     "helmet": "^6.0.0"
   }
 }
-
