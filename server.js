@@ -1,5 +1,6 @@
 import express from 'express';
-import path from 'path';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -7,22 +8,27 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles only
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    }
-  }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"], // allow inline styles
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+  })
+);
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -36,19 +42,19 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Allow OPTIONS preflight for /api/generate
+// Enable CORS preflight for /api/generate
 app.options('/api/generate', cors({ origin: true, credentials: true }));
 
-// Serve static files from public
+// Serve static files from the public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Your existing /api/generate handler (adjust or add your actual OpenAI call here)
+// Your /api/generate route (replace with your real OpenAI call)
 app.post('/api/generate', async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).send('Prompt is required');
 
-    // Dummy response for testing, replace with your OpenAI logic
+    // Dummy response for testing — replace with your OpenAI integration
     const html = `<div><h2>Your prompt:</h2><p>${prompt}</p><img src="https://via.placeholder.com/400x200?text=AI+Image" alt="Generated"/></div>`;
 
     res.json({ code: html });
