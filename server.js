@@ -1,12 +1,15 @@
 // Load environment variables first
 require('dotenv').config();
-app.use(express.static('public'));
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { OpenAI } = require('openai');
+const express = require('express');  // import express
+const app = express();               // create the app instance
 
+app.use(express.static('public'));
 const app = express();
 const port = process.env.PORT || 10000;
 
