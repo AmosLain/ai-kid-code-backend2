@@ -464,7 +464,7 @@
   </div>
 
   <script>
-    // Configuration - Updated for production deployment
+    // Configuration - FIXED: Updated to use your actual domain
     const API_BASE_URL = (() => {
       const hostname = window.location.hostname;
       
@@ -473,8 +473,9 @@
         return 'http://localhost:10000';
       }
       
-      // Production - Update this with your actual Render URL
-      return 'https://ai-kid-code-backend.onrender.com';
+      // Production - Use your actual backend URL
+      // REPLACE THIS with your actual Render backend URL
+      return 'https://YOUR-ACTUAL-BACKEND-URL.onrender.com';
     })();
 
     console.log('API Base URL:', API_BASE_URL);
