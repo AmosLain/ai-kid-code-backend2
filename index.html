@@ -464,10 +464,20 @@
   </div>
 
   <script>
-    // Configuration - change this to match your backend URL
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-      ? 'http://localhost:3000' 
-      : 'https://enterhere.vip';
+    // Configuration - Updated for production deployment
+    const API_BASE_URL = (() => {
+      const hostname = window.location.hostname;
+      
+      // Development environments
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:10000';
+      }
+      
+      // Production - Update this with your actual Render URL
+      return 'https://ai-kid-code-backend.onrender.com';
+    })();
+
+    console.log('API Base URL:', API_BASE_URL);
 
     let currentHTML = '';
 
@@ -533,6 +543,7 @@
 
       try {
         console.log('Sending request to:', `${API_BASE_URL}/generate`);
+        console.log('Request data:', { prompt, size, lang: 'en' });
         
         const response = await fetch(`${API_BASE_URL}/generate`, {
           method: 'POST',
@@ -546,13 +557,15 @@
           })
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (!response.ok) {
-          throw new Error(data.error || 'Something went wrong!');
+          throw new Error(data.error || data.message || 'Something went wrong!');
         }
 
-        if (data.success && data.code) {
+        if (data.code) {
           currentHTML = data.code;
           
           // Show preview
@@ -567,25 +580,30 @@
           // Clean up the blob URL after a delay
           setTimeout(() => URL.revokeObjectURL(url), 5000);
         } else {
-          throw new Error('Failed to generate art');
+          throw new Error('No art was generated. Please try again.');
         }
 
       } catch (error) {
         console.error('Generation error:', error);
         
-        if (error.message.includes('suggestions')) {
-          // Handle suggestions from backend
-          showError(error.message, [
+        let errorMessage = error.message;
+        let suggestions = [];
+
+        // Handle common errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'Cannot connect to the AI art server. Please check your internet connection and try again! 🌐';
+        } else if (error.message.includes('suggestions')) {
+          suggestions = [
             'A happy rainbow with clouds',
             'A cute puppy playing in a garden',
             'A colorful butterfly among flowers',
             'A friendly dragon reading a book'
-          ]);
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          showError('Cannot connect to the server. Please make sure the backend is running! 🔧');
-        } else {
-          showError(error.message || 'Something went wrong! Please try again. 🔄');
+          ];
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'The AI is taking too long to create your art. Please try again! ⏰';
         }
+
+        showError(errorMessage, suggestions);
       } finally {
         document.getElementById('loader').classList.remove('show');
       }
@@ -621,15 +639,35 @@
     // Test connection on page load
     window.addEventListener('load', async function() {
       try {
-        const response = await fetch(`${API_BASE_URL}/health`);
+        console.log('Testing backend connection...');
+        const response = await fetch(`${API_BASE_URL}/health`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
         if (response.ok) {
-          console.log('Backend connection successful');
+          const healthData = await response.json();
+          console.log('✅ Backend connection successful:', healthData);
+          showSuccess('🚀 AI Art Server is ready to create amazing art!');
         } else {
-          console.warn('Backend health check failed');
+          console.warn('⚠️ Backend health check failed:', response.status);
+          showError('⚠️ AI Art Server is having some issues. Please try again in a moment!');
         }
       } catch (error) {
-        console.warn('Cannot reach backend:', error.message);
-        showError('⚠️ Backend server is not responding. Please make sure your Node.js server is running!');
+        console.error('❌ Cannot reach backend:', error.message);
+        showError('🔧 Cannot connect to the AI Art Server. Please make sure you have internet connection and try again!');
+      }
+    });
+
+    // Add some visual feedback for button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.tagName === 'BUTTON' && !e.target.disabled) {
+        e.target.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          e.target.style.transform = '';
+        }, 150);
       }
     });
   </script>
