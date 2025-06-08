@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Story Generator Pro - Search & Video Creation</title>
+    <title>EnterHere.vip - AI Art Playground for Kids</title>
+    <meta name="description" content="Create amazing AI artwork! A safe, fun AI art generator designed specifically for kids.">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,14 +14,15 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Comic Neue', cursive;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -31,355 +34,264 @@
         }
 
         .header h1 {
+            font-family: 'Fredoka One', cursive;
             font-size: 2.5rem;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .nav-tabs {
-            display: flex;
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
             background: white;
-            border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        .nav-tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .nav-tab.active {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .tab-content {
-            display: none;
-            background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
         }
 
-        .tab-content.active {
-            display: block;
-            animation: fadeInUp 0.5s ease;
+        .help-section {
+            background: #e3f2fd;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid #2196f3;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .help-section h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .help-steps {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .help-steps li {
+            counter-increment: step-counter;
+            margin-bottom: 8px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .help-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #2196f3;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
         }
 
-        input, textarea, select {
+        .prompt-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
+            padding: 15px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-family: 'Comic Neue', cursive;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            min-height: 80px;
         }
 
-        input:focus, textarea:focus, select:focus {
+        .prompt-input:focus {
             outline: none;
             border-color: #667eea;
-            background: white;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .search-container {
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        .search-input-group {
+        .quality-selector {
             display: flex;
-            gap: 10px;
-            align-items: flex-end;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .search-input {
+        .quality-option {
             flex: 1;
+            padding: 15px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
         }
 
-        .search-filters {
-            display: flex;
+        .quality-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .quality-option.selected {
+            border-color: #667eea;
+            background: #f3f4ff;
+        }
+
+        .quality-option h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .quality-option p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .examples-section {
+            margin-bottom: 25px;
+        }
+
+        .examples-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .example-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
         }
 
-        .filter-select {
-            min-width: 150px;
+        .example-btn {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Comic Neue', cursive;
+            font-size: 0.95rem;
+            text-align: center;
         }
 
-        .btn {
+        .example-btn:hover {
+            border-color: #667eea;
+            background: #f3f4ff;
+            transform: translateY(-2px);
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-family: 'Comic Neue', cursive;
+            margin-bottom: 20px;
         }
 
-        .btn:hover {
+        .generate-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn:disabled {
+        .generate-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .results-container {
-            margin-top: 30px;
-        }
-
-        .story-card {
-            background: white;
-            border: 1px solid #e1e5e9;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .story-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-            border-color: #667eea;
-        }
-
-        .story-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .story-meta {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .story-tags {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-        }
-
-        .tag {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
         }
 
         .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: #666;
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
         }
 
-        .loading::before {
-            content: '';
-            width: 20px;
-            height: 20px;
-            border: 2px solid #e1e5e9;
-            border-top: 2px solid #667eea;
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin-right: 10px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #c62828;
-        }
-
-        .success-message {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #2e7d32;
-        }
-
-        .video-upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin: 20px 0;
-        }
-
-        .video-upload-area:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .video-upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f4ff;
-            transform: scale(1.02);
-        }
-
-        .video-preview {
+        .result-container {
             margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .preview-item {
-            position: relative;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .preview-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-        }
-
-        .remove-preview {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #dc3545;
-        }
-
-        .video-player {
-            width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e1e5e9;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 15px 0;
+        .tips-section {
+            background: #fff3e0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 5px solid #ff9800;
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transition: width 0.3s ease;
-            border-radius: 4px;
-        }
-
-        .character-counter {
-            text-align: right;
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .character-counter.warning {
-            color: #ff9800;
-        }
-
-        .character-counter.error {
-            color: #f44336;
-        }
-
-        .suggestions {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-
-        .suggestions h4 {
-            color: #8b6914;
+        .tips-section h3 {
+            color: #f57c00;
             margin-bottom: 10px;
         }
 
-        .suggestions ul {
-            color: #8b6914;
-            padding-left: 20px;
+        .tips-list {
+            list-style: none;
         }
 
+        .tips-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tips-list li::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -389,632 +301,329 @@
                 font-size: 2rem;
             }
 
-            .nav-tabs {
+            .main-card {
+                padding: 20px;
+            }
+
+            .quality-selector {
                 flex-direction: column;
             }
 
-            .search-input-group {
-                flex-direction: column;
+            .example-buttons {
+                grid-template-columns: 1fr;
             }
+        }
 
-            .search-filters {
-                justify-content: center;
-            }
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
 
-            .story-meta {
-                flex-direction: column;
-                gap: 5px;
-            }
+        /* Focus styles for keyboard navigation */
+        .generate-btn:focus,
+        .example-btn:focus,
+        .quality-option:focus,
+        .prompt-input:focus {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🎬 Story Generator Pro</h1>
-            <p>Create Amazing Stories • Search & Discover • Generate Videos</p>
-        </div>
+        <header class="header">
+            <h1>🎨 EnterHere.vip</h1>
+            <p>AI Art Playground for Kids - Create Amazing Artwork!</p>
+        </header>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('generate')">📝 Generate Story</button>
-            <button class="nav-tab" onclick="switchTab('search')">🔍 Search Stories</button>
-            <button class="nav-tab" onclick="switchTab('video')">🎥 Create Video</button>
-        </div>
-
-        <!-- Story Generation Tab -->
-        <div id="generate-tab" class="tab-content active">
-            <h2>Generate Your Story</h2>
-            <form id="story-form">
-                <div class="form-group">
-                    <label for="prompt">Story Prompt</label>
-                    <textarea id="prompt" placeholder="Tell me about a magical adventure with talking animals..." rows="4" maxlength="500"></textarea>
-                    <div id="prompt-counter" class="character-counter">0/500</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="age">Age Group</label>
-                    <select id="age">
-                        <option value="3">3-4 years</option>
-                        <option value="5">5-6 years</option>
-                        <option value="7" selected>7-8 years</option>
-                        <option value="9">9-10 years</option>
-                        <option value="11">11-12 years</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="theme">Story Theme</label>
-                    <select id="theme">
-                        <option value="adventure">🏰 Adventure</option>
-                        <option value="friendship">👫 Friendship</option>
-                        <option value="learning">📚 Learning</option>
-                        <option value="animals">🐾 Animals</option>
-                        <option value="fantasy">✨ Fantasy</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn" id="generate-btn">
-                    ✨ Generate Story
-                </button>
-            </form>
-
-            <div id="story-result" class="results-container"></div>
-        </div>
-
-        <!-- Search Tab -->
-        <div id="search-tab" class="tab-content">
-            <h2>Search Stories</h2>
-            
-            <div class="search-container">
-                <div class="search-input-group">
-                    <div class="search-input">
-                        <label for="search-query">Search Stories</label>
-                        <input type="text" id="search-query" placeholder="Search by title, content, or tags..." maxlength="100">
-                    </div>
-                    <button type="button" class="btn" onclick="performSearch()">
-                        🔍 Search
-                    </button>
-                </div>
-
-                <div class="search-filters">
-                    <div>
-                        <label for="theme-filter">Filter by Theme</label>
-                        <select id="theme-filter" class="filter-select">
-                            <option value="all">All Themes</option>
-                            <option value="adventure">🏰 Adventure</option>
-                            <option value="friendship">👫 Friendship</option>
-                            <option value="learning">📚 Learning</option>
-                            <option value="animals">🐾 Animals</option>
-                            <option value="fantasy">✨ Fantasy</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="limit-filter">Results per page</label>
-                        <select id="limit-filter" class="filter-select">
-                            <option value="10">10 results</option>
-                            <option value="20">20 results</option>
-                            <option value="50">50 results</option>
-                        </select>
-                    </div>
-                </div>
+        <main class="main-card">
+            <div class="help-section">
+                <h3>🌟 How to Create Your Artwork</h3>
+                <ol class="help-steps">
+                    <li>Describe what you want to draw in the box below</li>
+                    <li>Choose if you want a fast or detailed picture</li>
+                    <li>Click "Create My Artwork" and wait for the magic!</li>
+                    <li>Save your creation when it's ready</li>
+                </ol>
             </div>
 
-            <div id="search-results" class="results-container"></div>
-        </div>
-
-        <!-- Video Generation Tab -->
-        <div id="video-tab" class="tab-content">
-            <h2>Create Story Video</h2>
-            
-            <form id="video-form" enctype="multipart/form-data">
+            <form id="artForm" role="form" aria-label="AI Art Generation Form">
                 <div class="form-group">
-                    <label for="video-title">Video Title</label>
-                    <input type="text" id="video-title" placeholder="My Amazing Story Video" maxlength="100">
-                    <div id="title-counter" class="character-counter">0/100</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="video-text">Story Text</label>
-                    <textarea id="video-text" placeholder="Once upon a time..." rows="6" maxlength="1000"></textarea>
-                    <div id="text-counter" class="character-counter">0/1000</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="video-style">Video Style</label>
-                    <select id="video-style">
-                        <option value="slideshow">📸 Slideshow</option>
-                        <option value="animated">🎭 Animated</option>
-                        <option value="kinetic-text">📝 Kinetic Text</option>
-                        <option value="storybook">📖 Storybook</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="video-duration">Duration (seconds)</label>
-                    <input type="range" id="video-duration" min="5" max="60" value="30">
-                    <div>Duration: <span id="duration-display">30</span> seconds</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Upload Images (Optional)</label>
-                    <div class="video-upload-area" id="upload-area">
-                        <div>
-                            <p>📁 Drag & drop images here or click to browse</p>
-                            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                                Supports: JPG, PNG, GIF (Max 50MB each, up to 10 images)
-                            </p>
-                        </div>
-                        <input type="file" id="image-upload" multiple accept="image/*" style="display: none;">
+                    <label for="prompt">✏️ Describe Your Artwork:</label>
+                    <textarea 
+                        id="prompt" 
+                        name="prompt" 
+                        class="prompt-input" 
+                        placeholder="A friendly dragon playing with colorful balloons in a sunny meadow..."
+                        maxlength="500"
+                        required
+                        aria-describedby="prompt-help"
+                    ></textarea>
+                    <div id="prompt-help" class="sr-only">
+                        Describe the artwork you want to create. Keep it fun and kid-friendly!
                     </div>
-                    <div id="image-preview" class="video-preview"></div>
                 </div>
 
-                <button type="submit" class="btn btn-secondary" id="video-btn">
-                    🎬 Generate Video
+                <div class="form-group">
+                    <label>🎯 Choose Quality:</label>
+                    <div class="quality-selector" role="radiogroup" aria-label="Image quality selection">
+                        <div class="quality-option selected" data-size="512x512" role="radio" aria-checked="true" tabindex="0">
+                            <h4>⚡ Fast</h4>
+                            <p>Quick & Fun</p>
+                        </div>
+                        <div class="quality-option" data-size="1024x1024" role="radio" aria-checked="false" tabindex="0">
+                            <h4>✨ Detailed</h4>
+                            <p>High Quality</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h3>💡 Try These Fun Ideas:</h3>
+                    <div class="example-buttons">
+                        <button type="button" class="example-btn" data-prompt="A cute robot playing with puppies in a colorful garden">🤖 Robot & Puppies</button>
+                        <button type="button" class="example-btn" data-prompt="A magical unicorn flying over a rainbow castle">🦄 Unicorn Castle</button>
+                        <button type="button" class="example-btn" data-prompt="A friendly dinosaur having a tea party with teddy bears">🦕 Dino Tea Party</button>
+                        <button type="button" class="example-btn" data-prompt="A space cat exploring colorful alien planets">🐱 Space Cat</button>
+                        <button type="button" class="example-btn" data-prompt="A pirate ship made of candy sailing on a chocolate sea">🍭 Candy Pirate Ship</button>
+                        <button type="button" class="example-btn" data-prompt="A superhero bunny saving the day in a city of carrots">🐰 Super Bunny</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="generateBtn">
+                    🎨 Create My Artwork!
                 </button>
             </form>
 
-            <div id="video-result" class="results-container"></div>
-        </div>
+            <div class="loading" id="loading" aria-live="polite">
+                <div class="spinner"></div>
+                <p>Creating your amazing artwork... ✨</p>
+            </div>
+
+            <div id="result" class="result-container" aria-live="polite"></div>
+
+            <div class="tips-section">
+                <h3>🌈 Pro Tips for Amazing Art</h3>
+                <ul class="tips-list">
+                    <li>Use colorful, happy words like "bright", "cheerful", "magical"</li>
+                    <li>Describe animals, nature, or fantasy creatures</li>
+                    <li>Add fun details like "wearing a hat" or "with sparkles"</li>
+                    <li>Try combining different ideas like "underwater castle" or "flying car"</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Made with ❤️ for creative kids everywhere!</p>
+        </footer>
     </div>
 
     <script>
-        // Global variables
-        let currentTab = 'generate';
-        let uploadedFiles = [];
-        let videoJobId = null;
+        // DOM elements
+        const form = document.getElementById('artForm');
+        const promptInput = document.getElementById('prompt');
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const qualityOptions = document.querySelectorAll('.quality-option');
+        const exampleButtons = document.querySelectorAll('.example-btn');
 
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeEventListeners();
-            initializeCharacterCounters();
-            initializeFileUpload();
-            loadInitialStories();
+        let selectedSize = '512x512';
+
+        // Quality selection
+        qualityOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                qualityOptions.forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.setAttribute('aria-checked', 'false');
+                });
+                option.classList.add('selected');
+                option.setAttribute('aria-checked', 'true');
+                selectedSize = option.dataset.size;
+            });
+
+            // Keyboard support for quality selection
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    option.click();
+                }
+            });
         });
 
-        // Tab switching
-        function switchTab(tabName) {
-            // Update nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
+        // Example button functionality
+        exampleButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                promptInput.value = button.dataset.prompt;
+                promptInput.focus();
             });
-            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        });
 
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-
-            currentTab = tabName;
-        }
-
-        // Initialize event listeners
-        function initializeEventListeners() {
-            // Story generation form
-            document.getElementById('story-form').addEventListener('submit', handleStoryGeneration);
-            
-            // Search functionality
-            document.getElementById('search-query').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    performSearch();
-                }
-            });
-            
-            // Video generation form
-            document.getElementById('video-form').addEventListener('submit', handleVideoGeneration);
-            
-            // Duration slider
-            document.getElementById('video-duration').addEventListener('input', function() {
-                document.getElementById('duration-display').textContent = this.value;
-            });
-        }
-
-        // Initialize character counters
-        function initializeCharacterCounters() {
-            const counters = [
-                { input: 'prompt', counter: 'prompt-counter', max: 500 },
-                { input: 'video-title', counter: 'title-counter', max: 100 },
-                { input: 'video-text', counter: 'text-counter', max: 1000 }
-            ];
-
-            counters.forEach(({ input, counter, max }) => {
-                const inputEl = document.getElementById(input);
-                const counterEl = document.getElementById(counter);
-                
-                inputEl.addEventListener('input', function() {
-                    const length = this.value.length;
-                    counterEl.textContent = `${length}/${max}`;
-                    
-                    counterEl.className = 'character-counter';
-                    if (length > max * 0.9) {
-                        counterEl.classList.add('warning');
-                    }
-                    if (length >= max) {
-                        counterEl.classList.add('error');
-                    }
-                });
-            });
-        }
-
-        // Initialize file upload
-        function initializeFileUpload() {
-            const uploadArea = document.getElementById('upload-area');
-            const fileInput = document.getElementById('image-upload');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', handleDragOver);
-            uploadArea.addEventListener('dragleave', handleDragLeave);
-            uploadArea.addEventListener('drop', handleDrop);
-            fileInput.addEventListener('change', handleFileSelect);
-        }
-
-        // File upload handlers
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('dragover');
-        }
-
-        function handleDragLeave(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('dragover');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files);
-            processFiles(files);
-        }
-
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
-            processFiles(files);
-        }
-
-        function processFiles(files) {
-            const validFiles = files.filter(file => {
-                return file.type.startsWith('image/') && file.size <= 50 * 1024 * 1024;
-            });
-
-            if (validFiles.length !== files.length) {
-                showMessage('Some files were skipped (invalid type or too large)', 'error');
-            }
-
-            uploadedFiles = [...uploadedFiles, ...validFiles].slice(0, 10);
-            updateImagePreview();
-        }
-
-        function updateImagePreview() {
-            const preview = document.getElementById('image-preview');
-            preview.innerHTML = '';
-
-            uploadedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview ${index + 1}">
-                        <button type="button" class="remove-preview" onclick="removeImage(${index})">×</button>
-                    `;
-                    preview.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function removeImage(index) {
-            uploadedFiles.splice(index, 1);
-            updateImagePreview();
-        }
-
-        // Story generation
-        async function handleStoryGeneration(e) {
+        // Form submission
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const btn = document.getElementById('generate-btn');
-            const resultDiv = document.getElementById('story-result');
-            
-            btn.disabled = true;
-            btn.textContent = '✨ Generating...';
-            resultDiv.innerHTML = '<div class="loading">Generating your story...</div>';
-
-            try {
-                const formData = {
-                    prompt: document.getElementById('prompt').value.trim(),
-                    age: parseInt(document.getElementById('age').value),
-                    theme: document.getElementById('theme').value
-                };
-
-                const response = await fetch('/api/generate-story', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    displayStory(data.story);
-                    showMessage('Story generated successfully! 🎉', 'success');
-                } else {
-                    throw new Error(data.message || 'Failed to generate story');
-                }
-
-            } catch (error) {
-                console.error('Story generation error:', error);
-                resultDiv.innerHTML = `
-                    <div class="error-message">
-                        <strong>Oops!</strong> ${error.message}
-                        <div class="suggestions">
-                            <h4>Try this:</h4>
-                            <ul>
-                                <li>Make sure your prompt is kid-friendly</li>
-                                <li>Use 5-500 characters</li>
-                                <li>Try a different theme</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '✨ Generate Story';
-            }
-        }
-
-        // Search functionality
-        async function performSearch() {
-            const query = document.getElementById('search-query').value.trim();
-            const theme = document.getElementById('theme-filter').value;
-            const limit = document.getElementById('limit-filter').value;
-            const resultsDiv = document.getElementById('search-results');
-
-            if (!query) {
-                showMessage('Please enter a search query', 'error');
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert('Please describe what you want to create!');
+                promptInput.focus();
                 return;
             }
 
-            resultsDiv.innerHTML = '<div class="loading">Searching stories...</div>';
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Creating...';
+            loading.classList.add('show');
+            result.innerHTML = '';
 
             try {
-                const params = new URLSearchParams({
-                    q: query,
-                    theme: theme,
-                    limit: limit
-                });
-
-                const response = await fetch(`/api/search?${params}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    displaySearchResults(data.results, data.query);
-                    if (data.suggestions && data.suggestions.length > 0) {
-                        displaySuggestions(data.suggestions);
-                    }
-                } else {
-                    throw new Error(data.message || 'Search failed');
-                }
-
-            } catch (error) {
-                console.error('Search error:', error);
-                resultsDiv.innerHTML = `
-                    <div class="error-message">
-                        <strong>Search failed:</strong> ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        // Video generation
-        async function handleVideoGeneration(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('video-btn');
-            const resultDiv = document.getElementById('video-result');
-            
-            btn.disabled = true;
-            btn.textContent = '🎬 Creating Video...';
-            resultDiv.innerHTML = '<div class="loading">Generating your video...</div>';
-
-            try {
-                const formData = new FormData();
-                formData.append('title', document.getElementById('video-title').value.trim());
-                formData.append('text', document.getElementById('video-text').value.trim());
-                formData.append('style', document.getElementById('video-style').value);
-                formData.append('duration', document.getElementById('video-duration').value);
-
-                uploadedFiles.forEach(file => {
-                    formData.append('images', file);
-                });
-
-                const response = await fetch('/api/generate-video', {
+                const response = await fetch('/api/generate', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        size: selectedSize,
+                        lang: 'en'
+                    })
                 });
 
-                const data = await response.json();
-
-                if (data.success) {
-                    videoJobId = data.job.id;
-                    displayVideoProgress(data.job);
-                    monitorVideoProgress();
-                } else {
-                    throw new Error(data.message || 'Failed to generate video');
-                }
-
-            } catch (error) {
-                console.error('Video generation error:', error);
-                resultDiv.innerHTML = `
-                    <div class="error-message">
-                        <strong>Video generation failed:</strong> ${error.message}
-                    </div>
-                `;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🎬 Generate Video';
-            }
-        }
-
-        // Monitor video progress
-        async function monitorVideoProgress() {
-            if (!videoJobId) return;
-
-            try {
-                const response = await fetch(`/api/video-status/${videoJobId}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    updateVideoProgress(data.job);
-                    
-                    if (data.job.status === 'completed') {
-                        displayCompletedVideo(data.job);
-                    } else if (data.job.status === 'processing') {
-                        setTimeout(monitorVideoProgress, 2000);
-                    }
-                }
-            } catch (error) {
-                console.error('Video status check error:', error);
-            }
-        }
-
-        // Display functions
-        function displayStory(story) {
-            document.getElementById('story-result').innerHTML = `
-                <div class="story-card">
-                    <h3 class="story-title">${story.title}</h3>
-                    <div class="story-meta">
-                        <span>👶 Age: ${story.age}+</span>
-                        <span>🎭 Theme: ${story.theme}</span>
-                        <span>📅 ${new Date(story.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <p>${story.content}</p>
-                    <div class="story-tags">
-                        ${story.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function displaySearchResults(results, query) {
-            const resultsDiv = document.getElementById('search-results');
-            
-            if (results.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="error-message">
-                        No stories found for "${query}"
-                        <div class="suggestions">
-                            <h4>Try this:</h4>
-                            <ul>
-                                <li>Use different keywords</li>
-                                <li>Check spelling</li>
-                                <li>Try broader search terms</li>
-                                <li>Browse by theme instead</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-
-            const html = `
-                <h3>Found ${results.length} stories for "${query}"</h3>
-                ${results.map(story => `
-                    <div class="story-card">
-                        <h4 class="story-title">${story.title}</h4>
-                        <div class="story-meta">
-                            <span>👶 Age: ${story.age}+</span>
-                            <span>🎭 ${story.theme}</span>
-                            <span>👀 ${story.views} views</span>
-                            <span>❤️ ${story.likes} likes</span>
-                        </div>
-                        <p>${story.content.substring(0, 200)}...</p>
-                        <div class="story-tags">
-                            ${story.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-            
-            resultsDiv.innerHTML = html;
-        }
-
-        function displayVideoProgress(job) {
-            document.getElementById('video-result').innerHTML = `
-                <div class="success-message">
-                    <strong>Video generation started!</strong> Job ID: ${job.id}
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${job.progress}%"></div>
-                    </div>
-                    <p>Progress: ${job.progress}% - Status: ${job.status}</p>
-                </div>
-            `;
-        }
-
-        function updateVideoProgress(job) {
-            const progressFill = document.querySelector('.progress-fill');
-            if (progressFill) {
-                progressFill.style.width = `${job.progress}%`;
-            }
-        }
-
-        function displayCompletedVideo(job) {
-            document.getElementById('video-result').innerHTML = `
-                <div class="success-message">
-                    <strong>Video completed successfully! 🎉</strong>
-                    <video class="video-player" controls>
-                        <source src="${job.videoUrl}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <p>Video: ${job.title}</p>
-                    <button class="btn btn-success" onclick="downloadVideo('${job.videoUrl}')">
-                        📥 Download Video
-                    </button>
-                </div>
-            `;
-        }
-
-        function downloadVideo(url) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'story-video.mp4';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function showMessage(message, type = 'success') {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `${type}-message`;
-            messageDiv.textContent = message;
-            messageDiv.style.position = 'fixed';
-            messageDiv.style.top = '20px';
-            messageDiv.style.right = '20px';
-            messageDiv.style.zIndex = '1000';
-            messageDiv.style.maxWidth = '300px';
-            
-            document.body.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
-        }
-
-        // Load initial stories for search
-        async function loadInitialStories() {
-            try {
-                const response = await fetch('/api/stories?limit=5');
                 const data = await response.json();
                 
-                if (data.success && data.stories.length > 0) {
-                    // Pre-populate search with some results
-                    console.log(`Loaded ${data.stories.length} initial stories`);
+                // Hide loading state
+                loading.classList.remove('show');
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎨 Create My Artwork!';
+
+                // Display result
+                if (data.code) {
+                    result.innerHTML = data.code;
+                    
+                    // Add download functionality if image was generated successfully
+                    const img = result.querySelector('img');
+                    if (img) {
+                        addDownloadButton(img.src, prompt);
+                    }
+                } else {
+                    result.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Something went wrong. Please try again!</div>';
                 }
+
             } catch (error) {
-                console.error('Failed to load initial stories:', error);
+                console.error('Error:', error);
+                loading.classList.remove('show');
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎨 Create My Artwork!';
+                result.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Network error. Please check your connection and try again!</div>';
+            }
+        });
+
+        // Add download button to generated images
+        function addDownloadButton(imageUrl, prompt) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.innerHTML = '💾 Save My Artwork';
+            downloadBtn.style.cssText = `
+                margin-top: 15px;
+                padding: 12px 24px;
+                background: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-family: 'Comic Neue', cursive;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+            
+            downloadBtn.addEventListener('click', () => {
+                downloadImage(imageUrl, prompt);
+            });
+            
+            downloadBtn.addEventListener('mouseenter', () => {
+                downloadBtn.style.background = '#45a049';
+                downloadBtn.style.transform = 'translateY(-2px)';
+            });
+            
+            downloadBtn.addEventListener('mouseleave', () => {
+                downloadBtn.style.background = '#4caf50';
+                downloadBtn.style.transform = 'translateY(0)';
+            });
+
+            result.querySelector('div').appendChild(downloadBtn);
+        }
+
+        // Download image function
+        async function downloadImage(imageUrl, prompt) {
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `enterhere-artwork-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.innerHTML = '✅ Artwork saved successfully!';
+                successMsg.style.cssText = `
+                    margin-top: 10px;
+                    padding: 10px;
+                    background: #e8f5e8;
+                    color: #2e7d32;
+                    border-radius: 10px;
+                    text-align: center;
+                    font-weight: bold;
+                `;
+                result.appendChild(successMsg);
+                
+                setTimeout(() => {
+                    successMsg.remove();
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Sorry, there was an error saving your artwork. Please try right-clicking the image and selecting "Save image as..."');
             }
         }
+
+        // Character counter for prompt input
+        promptInput.addEventListener('input', () => {
+            const remaining = 500 - promptInput.value.length;
+            if (remaining < 50) {
+                promptInput.style.borderColor = remaining < 0 ? '#f44336' : '#ff9800';
+            } else {
+                promptInput.style.borderColor = '#e0e0e0';
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter to generate
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!generateBtn.disabled) {
+                    form.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        // Focus management for accessibility
+        promptInput.focus();
     </script>
 </body>
 </html>
-        
+
+
