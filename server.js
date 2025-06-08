@@ -6,7 +6,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { OpenAI } = require('openai');
-const express = require('express');  // import express
 const app = express();               // create the app instance
 
 app.use(express.static('public'));
