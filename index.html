@@ -1,257 +1,761 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>EnterHere.vip</title>
-  <!-- Load two kid-friendly fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Comic+Neue&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnterHere.vip - AI Art for Kids</title>
+  <meta name="description" content="A magical AI art playground where kids can create amazing pictures with just words!">
+  
+  <!-- Load kid-friendly fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
 
   <style>
+    :root {
+      --primary-color: #1e88e5;
+      --primary-dark: #1565c0;
+      --secondary-color: #ff6f00;
+      --secondary-dark: #e65100;
+      --success-color: #43a047;
+      --success-dark: #2e7d32;
+      --danger-color: #e53935;
+      --warning-color: #fb8c00;
+      --light-bg: #fafafa;
+      --white: #ffffff;
+      --text-primary: #333;
+      --text-secondary: #555;
+      --text-light: #777;
+      --border-radius: 8px;
+      --border-radius-large: 12px;
+      --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      --box-shadow-large: 0 8px 25px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Baloo 2', cursive;
-      background: #fafafa;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       margin: 0;
+      padding: 1rem;
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: var(--border-radius-large);
       padding: 2rem;
+      box-shadow: var(--box-shadow-large);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--success-color));
+    }
+
+    .header {
       text-align: center;
-      color: #333;
+      margin-bottom: 2rem;
     }
+
     h1 {
-      margin-bottom: 0.5rem;
-      font-size: 2.5rem;
-      color: #1e88e5;
+      margin: 0 0 0.5rem 0;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--primary-color);
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      animation: float 3s ease-in-out infinite;
     }
-    p.subtitle {
-      font-size: 1.1rem;
-      color: #555;
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      font-weight: 400;
+    }
+
+    .input-group {
       margin-bottom: 1.5rem;
     }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+
     textarea {
-      width: 80%;
-      max-width: 600px;
-      height: 80px;
+      width: 100%;
+      height: 100px;
       font-family: 'Comic Neue', sans-serif;
       font-size: 1rem;
-      padding: 0.8rem;
-      border: 2px solid #1e88e5;
-      border-radius: 8px;
-      resize: none;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: var(--border-radius);
+      resize: vertical;
+      transition: var(--transition);
+      background: var(--white);
+      line-height: 1.5;
     }
-    button, input[type="radio"] + label {
-      font-family: 'Comic Neue', sans-serif;
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
     }
+
+    textarea::placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
     button {
-      margin: 1rem 0.5rem 1rem 0;
-      padding: 0.6rem 1.2rem;
+      font-family: 'Comic Neue', sans-serif;
       font-size: 1rem;
-      cursor: pointer;
-      background: #1e88e5;
-      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 6px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: background 0.3s;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--box-shadow);
+      position: relative;
+      overflow: hidden;
     }
-    button:hover {
-      background: #1565c0;
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
     }
+
+    button:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    button:not(:disabled):active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--secondary-color);
+      color: var(--white);
+      font-size: 0.9rem;
+      padding: 0.6rem 1.2rem;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--secondary-dark);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+      color: var(--white);
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: var(--success-dark);
+    }
+
     .preset-container {
-      margin: 1rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin: 1.5rem 0;
     }
-    .preset-button {
-      background: #ff6f00;
-      margin: 0.3rem;
+
+    .size-toggle {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: var(--border-radius);
     }
-    .preset-button:hover {
-      background: #e65100;
+
+    .radio-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    #loader {
+
+    .radio-group input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary-color);
+    }
+
+    .radio-group label {
+      margin: 0;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .loader {
       display: none;
-      margin: 2rem 0;
       text-align: center;
+      margin: 2rem 0;
+      padding: 2rem;
+      background: linear-gradient(45deg, #f0f8ff, #e6f3ff);
+      border-radius: var(--border-radius);
+      border: 2px dashed var(--primary-color);
     }
-    #loader p {
+
+    .loader.show {
+      display: block;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .loader p {
       font-size: 1.2rem;
-      color: #1e88e5;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+      font-weight: 600;
     }
-    #loader img {
+
+    .loader-spinner {
       width: 50px;
-      margin-top: 0.5rem;
+      height: 50px;
+      margin: 0 auto;
+      border: 4px solid #e3f2fd;
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-    #preview {
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .preview-container {
+      margin-top: 2rem;
+    }
+
+    .preview {
       width: 100%;
       height: 500px;
       border: none;
-      margin-top: 1.5rem;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    #downloadBtn {
-      display: none;
-      margin: 1rem auto;
-      padding: 0.6rem 1.2rem;
-      background: #43a047;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: background 0.3s;
-    }
-    #downloadBtn:hover {
-      background: #2e7d32;
-    }
-    #downloadLink {
-      display: none;
-      margin-top: 0.8rem;
-      font-size: 1rem;
-      color: #1e88e5;
-      text-decoration: none;
-    }
-    .size-toggle {
-      margin: 1rem 0;
-      font-size: 1rem;
-    }
-    .size-toggle input {
-      margin-right: 0.3rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-large);
+      background: #f8f9fa;
     }
 
-    /* Responsive tweaks for mobile */
-    @media (max-width: 600px) {
+    .download-section {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .download-section.show {
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .download-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .download-link:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: var(--danger-color);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      border-left: 4px solid var(--danger-color);
+      margin: 1rem 0;
+      font-weight: 500;
+    }
+
+    .success-message {
+      background: #e8f5e8;
+      color: var(--success-color);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      border-left: 4px solid var(--success-color);
+      margin: 1rem 0;
+      font-weight: 500;
+    }
+
+    .suggestions {
+      margin-top: 0.5rem;
+    }
+
+    .suggestions button {
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+      margin: 0.2rem;
+      background: #e3f2fd;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+    }
+
+    .suggestions button:hover:not(:disabled) {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      
+      .container {
+        padding: 1.5rem;
+        margin: 0;
+      }
+
       textarea {
-        width: 95%;
-        height: 60px;
+        height: 80px;
       }
-      button {
-        width: 80%;
-        font-size: 1.1rem;
+
+      .button-group {
+        flex-direction: column;
+        align-items: center;
       }
-      #preview {
-        height: 300px;
+
+      .button-group button {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .size-toggle {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .preset-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .preset-container button {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .preview {
+        height: 350px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .size-toggle {
+        padding: 0.75rem;
+      }
+    }
+
+    /* Accessibility improvements */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --light-bg: #1a1a1a;
+        --white: #2d2d2d;
+        --text-primary: #e0e0e0;
+        --text-secondary: #b0b0b0;
+        --text-light: #888;
+      }
+
+      body {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      }
+
+      textarea {
+        background: #3a3a3a;
+        color: var(--text-primary);
+        border-color: #555;
+      }
+
+      textarea::placeholder {
+        color: #888;
+      }
+
+      .size-toggle {
+        background: #3a3a3a;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      
+      .container {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+      }
+      
+      button, .loader, .download-section {
+        display: none !important;
       }
     }
   </style>
 </head>
 <body>
-  <h1 id="title">EnterHere.vip</h1>
-  <p class="subtitle" id="subtitle">A magical AI art playground just for kids! ✨</p>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 id="title">EnterHere.vip</h1>
+      <p class="subtitle" id="subtitle">A magical AI art playground just for kids! ✨</p>
+    </header>
 
-  <!-- 1) Prompt Input -->
-  <textarea id="prompt" placeholder="Write something like: 'A smiling unicorn dancing on a rainbow'"></textarea><br>
-  <button id="generateBtn">Generate Page</button>
+    <!-- Main Form -->
+    <main>
+      <!-- Prompt Input -->
+      <div class="input-group">
+        <label for="prompt" id="promptLabel">What would you like to create?</label>
+        <textarea 
+          id="prompt" 
+          placeholder="Write something like: 'A smiling unicorn dancing on a rainbow'"
+          maxlength="500"
+          aria-describedby="promptHelp"
+        ></textarea>
+        <small id="promptHelp" style="color: #666; font-size: 0.9rem;">
+          <span id="charCount">0</span>/500 characters
+        </small>
+      </div>
 
-  <!-- 2) Preset Buttons -->
-  <div class="preset-container">
-    <button class="preset-button" data-preset="A blue whale diving in the sea">Blue whale</button>
-    <button class="preset-button" data-preset="A space robot exploring a candy planet">🚀 Space Robot</button>
-    <button class="preset-button" data-preset="A playful panda floating on a cloud">🐼 Panda Cloud</button>
+      <!-- Generate Button -->
+      <div class="button-group">
+        <button id="generateBtn" class="btn-primary" type="button">
+          <span id="generateText">Generate Page</span>
+        </button>
+      </div>
+
+      <!-- Preset Buttons -->
+      <div class="preset-container">
+        <button class="btn-secondary" data-preset="A blue whale diving in the deep ocean">
+          🐋 Blue Whale
+        </button>
+        <button class="btn-secondary" data-preset="A friendly space robot exploring a candy planet">
+          🚀 Space Robot
+        </button>
+        <button class="btn-secondary" data-preset="A playful panda floating on a fluffy cloud">
+          🐼 Panda Cloud
+        </button>
+        <button class="btn-secondary" data-preset="A magical fairy garden with glowing flowers">
+          🧚‍♀️ Fairy Garden
+        </button>
+        <button class="btn-secondary" data-preset="A colorful dragon reading a storybook">
+          🐉 Dragon Reader
+        </button>
+      </div>
+
+      <!-- Size Toggle -->
+      <div class="size-toggle">
+        <div class="radio-group">
+          <input type="radio" id="size512" name="size" value="512x512" checked>
+          <label for="size512" id="labelFast">Fast (512×512)</label>
+        </div>
+        <div class="radio-group">
+          <input type="radio" id="size1024" name="size" value="1024x1024">
+          <label for="size1024" id="labelDetailed">Detailed (1024×1024)</label>
+        </div>
+      </div>
+
+      <!-- Error/Success Messages -->
+      <div id="messageContainer"></div>
+
+      <!-- Loader Animation -->
+      <div id="loader" class="loader" role="status" aria-live="polite">
+        <p id="loadingText">🎨 AI is painting your masterpiece…</p>
+        <div class="loader-spinner" aria-hidden="true"></div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="preview-container">
+        <iframe 
+          id="preview" 
+          class="preview"
+          title="AI Generated Art Preview"
+          srcdoc="<div style='display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;color:#777;text-align:center;padding:2rem;'><div><h2>🎨 Your amazing creation will appear here!</h2><p>Click 'Generate Page' or try one of the fun presets above.</p></div></div>"
+        ></iframe>
+      </div>
+
+      <!-- Download Section -->
+      <div id="downloadSection" class="download-section" style="display: none;">
+        <button id="downloadBtn" class="btn-success" type="button">
+          📥 <span id="downloadText">Download My Creation</span>
+        </button>
+        <br>
+        <a id="downloadLink" href="#" class="download-link" style="display: none;">
+          <span id="downloadLinkText">Click here to save your masterpiece!</span>
+        </a>
+      </div>
+    </main>
   </div>
-
-  <!-- 3) Size Toggle -->
-  <div class="size-toggle">
-    <input type="radio" id="size512" name="size" value="512x512" checked>
-    <label for="size512" id="labelFast">Fast (512×512)</label>
-    &nbsp;&nbsp;
-    <input type="radio" id="size1024" name="size" value="1024x1024">
-    <label for="size1024" id="labelDetailed">Detailed (1024×1024)</label>
-  </div>
-
-  <!-- 4) Loader Animation -->
-  <div id="loader">
-    <p id="loadingText">🎨 AI is painting your masterpiece…</p>
-    <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading spinner">
-  </div>
-
-  <!-- 5) Preview Iframe -->
-  <iframe id="preview" srcdoc="<h2 style='text-align:center;color:#777;'>Your image will appear here.</h2>"></iframe>
-
-  <!-- 6) Download Button & Link -->
-  <button id="downloadBtn">📥 <span id="downloadText">Download My Page</span></button>
-  <a id="downloadLink" href="#" download="my_ai_creation.html">Click here to save your creation!</a>
 
   <script>
     // -------------- TRANSLATIONS OBJECT --------------
-    // Support English, Hebrew, Spanish, French. Fallback to English for other codes.
     const translations = {
       en: {
         title: "EnterHere.vip",
         subtitle: "A magical AI art playground just for kids! ✨",
+        promptLabel: "What would you like to create?",
         placeholder: "Write something like: 'A smiling unicorn dancing on a rainbow'",
-        generateBtn: "Generate Page",
+        generateText: "Generate Page",
         labelFast: "Fast (512×512)",
         labelDetailed: "Detailed (1024×1024)",
         loadingText: "🎨 AI is painting your masterpiece…",
-        downloadText: "Download My Page"
+        downloadText: "Download My Creation",
+        downloadLinkText: "Click here to save your masterpiece!",
+        emptyPrompt: "Please enter a prompt or use a preset button.",
+        generating: "Creating your art...",
+        characters: "characters",
+        errorTitle: "Oops! Something went wrong:",
+        tryAgain: "Try these instead:",
+        successTitle: "Amazing! Your creation is ready!"
       },
       he: {
         title: "אנטרהיר.אי-אי",
-        subtitle: "גן שעשועים קסום לילדים! ✨",
-        placeholder: "כתוב משהו כמו: 'אריה חזק מביט לעבר השמש",
-        generateBtn: "צור עמוד",
+        subtitle: "גן שעשועים קסום עם בינה מלאכותית לילדים! ✨",
+        promptLabel: "מה תרצה ליצור?",
+        placeholder: "כתוב משהו כמו: 'אריה חזק מביט לעבר השמש'",
+        generateText: "צור עמוד",
         labelFast: "מהיר (512×512)",
         labelDetailed: "מפואר (1024×1024)",
-        loadingText: "🎨 ה־AI מצייר את היצירה שלך…",
-        downloadText: "הורד את הדף שלי"
+        loadingText: "🎨 ה-AI מצייר את היצירה שלך…",
+        downloadText: "הורד את היצירה שלי",
+        downloadLinkText: "לחץ כאן כדי לשמור את יצירת המופת שלך!",
+        emptyPrompt: "אנא הכנס טקסט או לחץ על כפתור מוכן.",
+        generating: "יוצר את האמנות שלך...",
+        characters: "תווים",
+        errorTitle: "אופס! משהו השתבש:",
+        tryAgain: "נסה את אלה במקום:",
+        successTitle: "מדהים! היצירה שלך מוכנה!"
       },
       es: {
         title: "EnterHere.vip",
         subtitle: "¡Un patio de juegos mágico con IA para niños! ✨",
+        promptLabel: "¿Qué te gustaría crear?",
         placeholder: "Escribe algo como: 'Un unicornio sonriente bailando en un arcoíris'",
-        generateBtn: "Generar Página",
+        generateText: "Generar Página",
         labelFast: "Rápido (512×512)",
         labelDetailed: "Detallado (1024×1024)",
         loadingText: "🎨 La IA está pintando tu obra maestra…",
-        downloadText: "Descargar mi página"
+        downloadText: "Descargar Mi Creación",
+        downloadLinkText: "¡Haz clic aquí para guardar tu obra maestra!",
+        emptyPrompt: "Por favor ingresa un texto o usa un botón predeterminado.",
+        generating: "Creando tu arte...",
+        characters: "caracteres",
+        errorTitle: "¡Ups! Algo salió mal:",
+        tryAgain: "Prueba estos en su lugar:",
+        successTitle: "¡Increíble! ¡Tu creación está lista!"
       },
       fr: {
         title: "EnterHere.vip",
         subtitle: "Un terrain de jeu IA magique pour les enfants ! ✨",
+        promptLabel: "Que souhaitez-vous créer ?",
         placeholder: "Écrivez quelque chose comme : 'Une licorne souriante dansant sur un arc-en-ciel'",
-        generateBtn: "Générer la page",
+        generateText: "Générer la Page",
         labelFast: "Rapide (512×512)",
         labelDetailed: "Détaillé (1024×1024)",
-        loadingText: "🎨 L’IA peint votre chef-d’œuvre…",
-        downloadText: "Télécharger ma page"
+        loadingText: "🎨 L'IA peint votre chef-d'œuvre…",
+        downloadText: "Télécharger Ma Création",
+        downloadLinkText: "Cliquez ici pour sauvegarder votre chef-d'œuvre !",
+        emptyPrompt: "Veuillez saisir un texte ou utiliser un bouton prédéfini.",
+        generating: "Création de votre art...",
+        characters: "caractères",
+        errorTitle: "Oups ! Quelque chose s'est mal passé :",
+        tryAgain: "Essayez ceux-ci à la place :",
+        successTitle: "Incroyable ! Votre création est prête !"
       }
     };
 
-    // Determine the user's language (e.g. "en", "he", "es", "fr")
+    // Determine the user's language
     const userLang = (navigator.language || navigator.userLanguage).split('-')[0];
     const lang = translations[userLang] ? userLang : 'en';
+    const t = translations[lang];
 
     // Apply translations to UI elements
-    document.getElementById('title').innerText = translations[lang].title;
-    document.getElementById('subtitle').innerText = translations[lang].subtitle;
-    document.getElementById('prompt').placeholder = translations[lang].placeholder;
-    document.getElementById('generateBtn').innerText = translations[lang].generateBtn;
-    document.getElementById('labelFast').innerText = translations[lang].labelFast;
-    document.getElementById('labelDetailed').innerText = translations[lang].labelDetailed;
-    document.getElementById('loadingText').innerText = translations[lang].loadingText;
-    document.getElementById('downloadText').innerText = translations[lang].downloadText;
+    function applyTranslations() {
+      document.getElementById('title').textContent = t.title;
+      document.getElementById('subtitle').textContent = t.subtitle;
+      document.getElementById('promptLabel').textContent = t.promptLabel;
+      document.getElementById('prompt').placeholder = t.placeholder;
+      document.getElementById('generateText').textContent = t.generateText;
+      document.getElementById('labelFast').textContent = t.labelFast;
+      document.getElementById('labelDetailed').textContent = t.labelDetailed;
+      document.getElementById('loadingText').textContent = t.loadingText;
+      document.getElementById('downloadText').textContent = t.downloadText;
+      document.getElementById('downloadLinkText').textContent = t.downloadLinkText;
+    }
 
-    // -------------- GENERATE FUNCTION --------------
-    document.getElementById('generateBtn').addEventListener('click', generate);
+    // Character counter
+    function updateCharCounter() {
+      const prompt = document.getElementById('prompt');
+      const charCount = document.getElementById('charCount');
+      const count = prompt.value.length;
+      charCount.textContent = count;
+      
+      if (count > 450) {
+        charCount.style.color = '#e53935';
+      } else if (count > 350) {
+        charCount.style.color = '#fb8c00';
+      } else {
+        charCount.style.color = '#666';
+      }
+    }
 
+    // Show message (error or success)
+    function showMessage(message, type = 'error', suggestions = []) {
+      const container = document.getElementById('messageContainer');
+      const className = type === 'error' ? 'error-message' : 'success-message';
+      const title = type === 'error' ? t.errorTitle : t.successTitle;
+      
+      let html = `<div class="${className}">
+        <strong>${title}</strong><br>
+        ${message}
+      `;
+      
+      if (suggestions.length > 0) {
+        html += `<div class="suggestions">
+          <p><strong>${t.tryAgain}</strong></p>
+          ${suggestions.map(s => `<button onclick="usePrompt('${s}')">${s}</button>`).join('')}
+        </div>`;
+      }
+      
+      html += '</div>';
+      container.innerHTML = html;
+      
+      // Auto-hide success messages
+      if (type === 'success') {
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 5000);
+      }
+    }
+
+    // Clear messages
+    function clearMessages() {
+      document.getElementById('messageContainer').innerHTML = '';
+    }
+
+    // Use suggested prompt
+    function usePrompt(promptText) {
+      document.getElementById('prompt').value = promptText;
+      updateCharCounter();
+      clearMessages();
+      generate();
+    }
+
+    // Set loading state
+    function setLoadingState(isLoading) {
+      const generateBtn = document.getElementById('generateBtn');
+      const generateText = document.getElementById('generateText');
+      const loader = document.getElementById('loader');
+      const preview = document.getElementById('preview');
+      const downloadSection = document.getElementById('downloadSection');
+      
+      if (isLoading) {
+        generateBtn.disabled = true;
+        generateText.textContent = t.generating;
+        loader.classList.add('show');
+        preview.style.display = 'none';
+        downloadSection.style.display = 'none';
+        clearMessages();
+      } else {
+        generateBtn.disabled = false;
+        generateText.textContent = t.generateText;
+        loader.classList.remove('show');
+        preview.style.display = 'block';
+      }
+    }
+
+    // Main generate function
     async function generate() {
       const promptText = document.getElementById('prompt').value.trim();
+      
       if (!promptText) {
-        alert(
-          lang === 'he'
-            ? 'אנא הכנס טקסט או לחץ על כפתור מוכן.'
-            : lang === 'es'
-            ? 'Por favor ingresa un texto o usa un botón predeterminado.'
-            : lang === 'fr'
-            ? "Veuillez saisir un texte ou utiliser un bouton prédéfini."
-            : 'Please enter a prompt or use a preset button.'
-        );
+        showMessage(t.emptyPrompt);
         return;
       }
 
-      // Show loader, hide iframe + download button
-      document.getElementById('loader').style.display = 'block';
-      document.getElementById('preview').style.display = 'none';
-      document.getElementById('downloadBtn').style.display = 'none';
-      document.getElementById('downloadLink').style.display = 'none';
+      setLoadingState(true);
 
       // Get selected size
       const sizeRadios = document.getElementsByName('size');
@@ -264,62 +768,153 @@
       }
 
       try {
-        const res = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
+        const response = await fetch('https://ai-kid-code-backend2.onrender.com/generate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
             prompt: promptText,
             size: selectedSize,
             lang: lang
           })
         });
-        const data = await res.json();
 
-        // Hide loader, show iframe with returned HTML
-        document.getElementById('loader').style.display = 'none';
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Network error occurred');
+        }
+
+        // Success - show the generated content
+        setLoadingState(false);
         const iframe = document.getElementById('preview');
-        iframe.style.display = 'block';
         iframe.srcdoc = data.code;
+        
+        // Show download section
+        const downloadSection = document.getElementById('downloadSection');
+        downloadSection.style.display = 'block';
+        downloadSection.classList.add('show');
+        
+        showMessage(t.successTitle, 'success');
 
-        // Show download button now that iframe has srcdoc
-        document.getElementById('downloadBtn').style.display = 'inline-block';
-      } catch (err) {
-        document.getElementById('loader').style.display = 'none';
+      } catch (error) {
+        setLoadingState(false);
+        
+        let errorMessage = error.message;
+        let suggestions = [];
+        
+        // Handle different types of errors
+        if (error.message.includes('suggestions')) {
+          // Extract suggestions if provided by server
+          try {
+            const errorData = JSON.parse(error.message);
+            if (errorData.suggestions) {
+              suggestions = errorData.suggestions;
+            }
+          } catch (e) {
+            // Fallback suggestions
+            suggestions = [
+              'A happy rainbow with clouds',
+              'A cute puppy playing in a garden',
+              'A colorful butterfly among flowers',
+              'A friendly dragon reading a book'
+            ];
+          }
+        }
+        
+        showMessage(errorMessage, 'error', suggestions);
+        
+        // Show error in iframe as fallback
         const iframe = document.getElementById('preview');
-        iframe.style.display = 'block';
-        iframe.srcdoc =
-          `<h2 style="color:red; text-align:center;">` +
-          (lang === 'he'
-            ? 'שגיאה בשליפת התמונות'
-            : lang === 'es'
-            ? 'Error al obtener la imagen'
-            : lang === 'fr'
-            ? "Erreur lors de la récupération de l'image"
-            : 'Error fetching image') +
-          `</h2><pre style="white-space:pre-wrap;">${err.message}</pre>`;
+        iframe.srcdoc = `
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;color:#e53935;text-align:center;padding:2rem;">
+            <div>
+              <h2>😔 Oops! Something went wrong</h2>
+              <p>${errorMessage}</p>
+              <p><small>Please try again with a different prompt.</small></p>
+            </div>
+          </div>
+        `;
       }
     }
 
-    // Preset buttons fill the prompt and immediately call generate()
-    document.querySelectorAll('.preset-button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const text = btn.getAttribute('data-preset');
-        document.getElementById('prompt').value = text;
-        generate();
-      });
-    });
-
-    // -------------- DOWNLOAD FUNCTION --------------
+    // Download function
     function downloadCreation() {
       const iframe = document.getElementById('preview');
       const htmlContent = iframe.srcdoc;
+      
+      if (!htmlContent || htmlContent.includes('will appear here')) {
+        showMessage('Please generate an image first!', 'error');
+        return;
+      }
+      
       const blob = new Blob([htmlContent], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.getElementById('downloadLink');
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `my_ai_creation_${timestamp}.html`;
+      
       link.href = url;
-      link.style.display = 'block';
+      link.download = filename;
+      link.style.display = 'inline';
+      
+      // Auto-click for immediate download
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
     }
-    document.getElementById('downloadBtn').addEventListener('click', downloadCreation);
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      applyTranslations();
+      
+      // Character counter
+      const promptTextarea = document.getElementById('prompt');
+      promptTextarea.addEventListener('input', updateCharCounter);
+      updateCharCounter();
+      
+      // Generate button
+      document.getElementById('generateBtn').addEventListener('click', generate);
+      
+      // Enter key in textarea
+      promptTextarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+          e.preventDefault();
+          generate();
+        }
+      });
+      
+      // Preset buttons
+      document.querySelectorAll('[data-preset]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const promptText = this.getAttribute('data-preset');
+          document.getElementById('prompt').value = promptText;
+          updateCharCounter();
+          generate();
+        });
+      });
+      
+      // Download button
+      document.getElementById('downloadBtn').addEventListener('click', downloadCreation);
+      
+      // Focus on prompt textarea
+      promptTextarea.focus();
+    });
+
+    // Service worker registration for PWA (optional)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Ignore errors if no service worker
+      });
+    }
   </script>
 </body>
 </html>
+        
