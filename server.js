@@ -1,59 +1,40 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { OpenAI } = require('openai');
+Excellent! Now I can see you're building an AI-powered application for kids using Node.js and Express with OpenAI integration. Let me get your main server file to provide a comprehensive analysis.
 
-dotenv.config();
+## **Initial Analysis from package.json:**
 
-const app = express();
-const PORT = process.env.PORT;
+**Tech Stack Overview:**
+- **Node.js/Express** - Good choice for API backend
+- **OpenAI API** - Perfect for AI functionality
+- **CORS** - Essential for frontend-backend communication
+- **dotenv** - Good for environment variable management
 
-app.use(cors());
-app.use(express.json());
+**Immediate Observations:**
+✅ **Good**: Clean, minimal dependencies - no bloat
+✅ **Good**: Using latest versions of key packages
+⚠️ **Consider**: Missing some important production dependencies
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+Now, could you paste your **server.js** file? This will show me:
+- How you're structuring your API endpoints
+- Security implementations
+- Error handling
+- OpenAI integration approach
+- Overall architecture
 
-app.post('/generate', async (req, res) => {
-  const { prompt } = req.body;
-  if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
+Also, what does your project folder structure look like? Do you have:
+- Routes folder?
+- Controllers?
+- Middleware?
+- Any frontend files?
 
-  try {
-    // STEP 1: Generate image from prompt
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024"
-    });
-    const imageUrl = imageResponse.data[0].url;
+Once I see your server.js, I'll provide detailed recommendations for:
+- **Security enhancements**
+- **Performance optimizations** 
+- **Code structure improvements**
+- **Production readiness**
+- **Best practices for AI integration**
+- **Error handling**
 
-    // STEP 2: Ask GPT to build HTML with that image
-    const codeResponse = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a kids' site assistant. Use this image in the page: ${imageUrl}. 
-Generate a beautiful full HTML page for kids using this image in a fun, colorful, and magical way. 
-No markdown. Use emojis, animations, and creative layout. Output HTML only.`
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.9,
-    });
-
-    const code = codeResponse.choices[0].message.content;
-    console.log("✅ Generated HTML with image:", imageUrl);
-    res.json({ code });
-
-  } catch (err) {
-    console.error('❌ Error during generation:', err.response?.data || err.message || err);
-    res.status(500).json({ error: 'Failed to generate code' });
-  }
-});
-
+Please paste your server.js content!
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
