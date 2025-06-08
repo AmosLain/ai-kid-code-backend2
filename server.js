@@ -9,7 +9,6 @@ const { OpenAI } = require('openai');
 const app = express();               // create the app instance
 
 app.use(express.static('public'));
-const app = express();
 const port = process.env.PORT || 10000;
 
 app.use(express.static(path.join(__dirname, 'public')));
