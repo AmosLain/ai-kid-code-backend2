@@ -1,6 +1,6 @@
 // Load environment variables first
 require('dotenv').config();
-
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,10 +13,15 @@ app.use(express.static('public'));
 const app = express();
 const port = process.env.PORT || 10000;
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Security middleware - must come before other middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for now since we're serving HTML with inline styles
+  contentSecurityPolicy: false,
 }));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Rate limiting - prevent API abuse
 const limiter = rateLimit({
@@ -432,6 +437,9 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
+});
 app.listen(port, () => {
   console.log(`🚀 AI Kid Code Backend Server started successfully!`);
   console.log(`📍 Server running on port ${port}`);
