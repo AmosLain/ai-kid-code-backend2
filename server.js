@@ -1,6 +1,6 @@
 // Load environment variables first
 require('dotenv').config();
-
+app.use(express.static('public'));
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
