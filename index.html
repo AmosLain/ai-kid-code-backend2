@@ -368,3 +368,270 @@
       .container {
         padding: 1.5rem;
         margin: 0.5rem;
+      }
+
+      .button-group {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .size-toggle {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 AI Art Magic!</h1>
+      <p class="subtitle">Type what you want to see and watch the magic happen! ✨</p>
+    </div>
+
+    <div class="input-group">
+      <label for="prompt">What do you want to create?</label>
+      <textarea 
+        id="prompt" 
+        placeholder="A cute cat playing with colorful balls of yarn..."
+        maxlength="500"
+      ></textarea>
+    </div>
+
+    <div class="preset-container">
+      <button class="btn-secondary" onclick="setPrompt('A happy rainbow with fluffy clouds')">🌈 Rainbow</button>
+      <button class="btn-secondary" onclick="setPrompt('A cute puppy playing in a flower garden')">🐶 Puppy</button>
+      <button class="btn-secondary" onclick="setPrompt('A colorful butterfly flying among flowers')">🦋 Butterfly</button>
+      <button class="btn-secondary" onclick="setPrompt('A friendly dragon reading a book')">🐲 Dragon</button>
+      <button class="btn-secondary" onclick="setPrompt('A magical unicorn in an enchanted forest')">🦄 Unicorn</button>
+    </div>
+
+    <div class="size-toggle">
+      <span style="font-weight: 600;">Image Size:</span>
+      <div class="radio-group">
+        <input type="radio" id="size-small" name="size" value="512x512" checked>
+        <label for="size-small">Small (512x512)</label>
+      </div>
+      <div class="radio-group">
+        <input type="radio" id="size-large" name="size" value="1024x1024">
+        <label for="size-large">Large (1024x1024)</label>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="generateArt()">
+        ✨ Create My Art!
+      </button>
+      <button class="btn-secondary" onclick="clearAll()">
+        🗑️ Clear
+      </button>
+    </div>
+
+    <div id="loader" class="loader">
+      <p>Creating your magical art... 🎨</p>
+      <div class="loader-spinner"></div>
+      <p style="font-size: 0.9rem; margin-top: 1rem;">This might take a moment!</p>
+    </div>
+
+    <div id="error-container"></div>
+
+    <div id="preview-container" class="preview-container" style="display: none;">
+      <iframe id="preview" class="preview"></iframe>
+      <div class="download-section">
+        <button class="btn-success" onclick="downloadHTML()">
+          💾 Download My Creation
+        </button>
+        <br>
+        <a id="download-link" class="download-link" style="display: none;">
+          Right-click and "Save As" to download
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - change this to match your backend URL
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : 'https://enterhere.vip';
+
+    let currentHTML = '';
+
+    function setPrompt(text) {
+      document.getElementById('prompt').value = text;
+    }
+
+    function clearAll() {
+      document.getElementById('prompt').value = '';
+      document.getElementById('preview-container').style.display = 'none';
+      document.getElementById('error-container').innerHTML = '';
+      currentHTML = '';
+    }
+
+    function getSelectedSize() {
+      const sizeInputs = document.querySelectorAll('input[name="size"]');
+      for (const input of sizeInputs) {
+        if (input.checked) {
+          return input.value;
+        }
+      }
+      return '512x512';
+    }
+
+    function showError(message, suggestions = []) {
+      const errorContainer = document.getElementById('error-container');
+      let html = `<div class="error-message">${message}</div>`;
+      
+      if (suggestions.length > 0) {
+        html += '<div class="suggestions"><p><strong>Try these instead:</strong></p>';
+        suggestions.forEach(suggestion => {
+          html += `<button onclick="setPrompt('${suggestion}')">${suggestion}</button>`;
+        });
+        html += '</div>';
+      }
+      
+      errorContainer.innerHTML = html;
+    }
+
+    function showSuccess(message) {
+      const errorContainer = document.getElementById('error-container');
+      errorContainer.innerHTML = `<div class="success-message">${message}</div>`;
+    }
+
+    async function generateArt() {
+      const prompt = document.getElementById('prompt').value.trim();
+      const size = getSelectedSize();
+      
+      if (!prompt) {
+        showError('Please tell me what you want to create! 🎨');
+        return;
+      }
+
+      if (prompt.length < 3) {
+        showError('Please write a bit more about what you want to create! 📝');
+        return;
+      }
+
+      // Show loader
+      document.getElementById('loader').classList.add('show');
+      document.getElementById('error-container').innerHTML = '';
+      document.getElementById('preview-container').style.display = 'none';
+
+      try {
+        console.log('Sending request to:', `${API_BASE_URL}/generate`);
+        
+        const response = await fetch(`${API_BASE_URL}/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            size: size,
+            lang: 'en'
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Something went wrong!');
+        }
+
+        if (data.success && data.code) {
+          currentHTML = data.code;
+          
+          // Show preview
+          const preview = document.getElementById('preview');
+          const blob = new Blob([data.code], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          preview.src = url;
+          
+          document.getElementById('preview-container').style.display = 'block';
+          showSuccess('Your amazing art is ready! 🎉');
+          
+          // Clean up the blob URL after a delay
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } else {
+          throw new Error('Failed to generate art');
+        }
+
+      } catch (error) {
+        console.error('Generation error:', error);
+        
+        if (error.message.includes('suggestions')) {
+          // Handle suggestions from backend
+          showError(error.message, [
+            'A happy rainbow with clouds',
+            'A cute puppy playing in a garden',
+            'A colorful butterfly among flowers',
+            'A friendly dragon reading a book'
+          ]);
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          showError('Cannot connect to the server. Please make sure the backend is running! 🔧');
+        } else {
+          showError(error.message || 'Something went wrong! Please try again. 🔄');
+        }
+      } finally {
+        document.getElementById('loader').classList.remove('show');
+      }
+    }
+
+    function downloadHTML() {
+      if (!currentHTML) {
+        showError('No art to download! Please create some art first. 🎨');
+        return;
+      }
+
+      const blob = new Blob([currentHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'my-ai-art.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showSuccess('Your art has been downloaded! 💾');
+    }
+
+    // Add enter key support for textarea
+    document.getElementById('prompt').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        generateArt();
+      }
+    });
+
+    // Test connection on page load
+    window.addEventListener('load', async function() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        if (response.ok) {
+          console.log('Backend connection successful');
+        } else {
+          console.warn('Backend health check failed');
+        }
+      } catch (error) {
+        console.warn('Cannot reach backend:', error.message);
+        showError('⚠️ Backend server is not responding. Please make sure your Node.js server is running!');
+      }
+    });
+  </script>
+</body>
+</html>
