@@ -1,17 +1,17 @@
-// server.js
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { body, validationResult } = require('express-validator');
+const { body, validationResult, query } = require('express-validator');
 const winston = require('winston');
-const compression = require('compression');
-require('dotenv').config();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure Winston logger
+// Configure Winston Logger
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -19,369 +19,465 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  defaultMeta: { service: 'ai-kid-code-backend' },
+  defaultMeta: { service: 'story-generator' },
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' }),
     new winston.transports.Console({
       format: winston.format.simple()
     })
   ]
 });
 
-// Security middleware
+// Security Middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https://api.openai.com", "https://image.pollinations.ai"]
+      scriptSrc: ["'self'"],
+      mediaSrc: ["'self'", "blob:", "data:"],
+      imgSrc: ["'self'", "data:", "blob:"]
     }
   }
 }));
 
-// Rate limiting - more generous for kids
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static('public'));
+
+// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs
-  message: {
-    error: 'Too many requests, please try again later!',
-    translations: {
-      en: 'Too many requests, please try again later!',
-      he: 'יותר מדי בקשות, נסה שוב מאוחר יותר!',
-      es: '¡Demasiadas solicitudes, inténtalo de nuevo más tarde!',
-      fr: 'Trop de demandes, veuillez réessayer plus tard!'
-    }
-  },
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
-app.use(limiter);
-app.use(compression());
-app.use(express.json({ limit: '1mb' }));
+const searchLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // 30 searches per minute
+  message: 'Too many search requests, please slow down.'
+});
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://enterhere.vip', 'https://www.enterhere.vip']
-    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500'],
-  credentials: true,
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+const videoLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 3, // 3 video generations per 5 minutes
+  message: 'Video generation limit reached, please wait before trying again.'
+});
 
-// Kid-safe prompt filter
-const kidSafeFilter = (prompt) => {
+app.use('/api/', limiter);
+app.use('/api/search', searchLimiter);
+app.use('/api/generate-video', videoLimiter);
+
+// File Upload Configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  }
+});
+
+// In-memory storage for demo (use database in production)
+let stories = [];
+let searchIndex = new Map();
+
+// Content filtering function
+function containsInappropriateContent(text) {
   const inappropriateWords = [
-    'violence', 'weapon', 'gun', 'knife', 'blood', 'death', 'kill', 'hurt',
-    'scary', 'monster', 'demon', 'devil', 'hell', 'damn', 'stupid', 'hate'
+    'violent', 'scary', 'murder', 'kill', 'death', 'blood',
+    'weapon', 'gun', 'knife', 'fight', 'hate', 'stupid',
+    'dumb', 'idiot', 'ugly', 'fat', 'loser'
   ];
   
-  const lowerPrompt = prompt.toLowerCase();
-  const foundInappropriate = inappropriateWords.find(word => 
-    lowerPrompt.includes(word)
-  );
-  
-  if (foundInappropriate) {
-    return {
-      safe: false,
-      reason: `Let's try something more positive instead of "${foundInappropriate}"!`
-    };
-  }
-  
-  return { safe: true };
-};
+  const lowerText = text.toLowerCase();
+  return inappropriateWords.some(word => lowerText.includes(word));
+}
 
-// Enhanced prompt for kid-friendly content
-const enhancePrompt = (originalPrompt, lang = 'en') => {
-  const styleEnhancers = {
-    en: "cartoon style, colorful, child-friendly, happy, bright colors, cute, playful",
-    he: "סגנון קריקטורה, צבעוני, ידידותי לילדים, שמח, צבעים בהירים, חמוד, שובב",
-    es: "estilo de dibujos animados, colorido, apropiado para niños, feliz, colores brillantes, lindo, juguetón",
-    fr: "style cartoon, coloré, adapté aux enfants, joyeux, couleurs vives, mignon, ludique"
-  };
-  
-  const enhancer = styleEnhancers[lang] || styleEnhancers.en;
-  return `${originalPrompt}, ${enhancer}`;
-};
+// Build search index
+function buildSearchIndex() {
+  searchIndex.clear();
+  stories.forEach((story, index) => {
+    const words = (story.title + ' ' + story.content + ' ' + story.tags.join(' ')).toLowerCase().split(/\s+/);
+    words.forEach(word => {
+      if (word.length > 2) {
+        if (!searchIndex.has(word)) {
+          searchIndex.set(word, new Set());
+        }
+        searchIndex.get(word).add(index);
+      }
+    });
+  });
+}
 
-// Generate HTML with embedded image
-const generateHTML = (imageUrl, prompt, lang = 'en') => {
-  const translations = {
-    en: {
-      title: "My AI Creation",
-      description: "I created this with AI!",
-      prompt: "My prompt was",
-      madeby: "Made with EnterHere.vip"
-    },
-    he: {
-      title: "היצירה שלי עם AI",
-      description: "יצרתי את זה עם בינה מלאכותית!",
-      prompt: "הפרומפט שלי היה",
-      madeby: "נוצר עם EnterHere.vip"
-    },
-    es: {
-      title: "Mi Creación con IA",
-      description: "¡Creé esto con IA!",
-      prompt: "Mi prompt fue",
-      madeby: "Hecho con EnterHere.vip"
-    },
-    fr: {
-      title: "Ma Création IA",
-      description: "J'ai créé ceci avec l'IA !",
-      prompt: "Mon prompt était",
-      madeby: "Fait avec EnterHere.vip"
+// Search function with fuzzy matching
+function searchStories(query, limit = 10) {
+  if (!query || query.trim().length === 0) return [];
+  
+  const searchTerms = query.toLowerCase().trim().split(/\s+/);
+  const results = new Map();
+  
+  searchTerms.forEach(term => {
+    // Exact matches
+    if (searchIndex.has(term)) {
+      searchIndex.get(term).forEach(storyIndex => {
+        results.set(storyIndex, (results.get(storyIndex) || 0) + 3);
+      });
     }
-  };
+    
+    // Fuzzy matches
+    for (const [word, storyIndices] of searchIndex.entries()) {
+      if (word.includes(term) || term.includes(word)) {
+        storyIndices.forEach(storyIndex => {
+          results.set(storyIndex, (results.get(storyIndex) || 0) + 1);
+        });
+      }
+    }
+  });
   
-  const t = translations[lang] || translations.en;
-  
-  return `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${t.title}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Comic+Neue&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Baloo 2', cursive;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 2rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
-            text-align: center;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 800px;
-            color: #333;
-        }
-        h1 {
-            color: #1e88e5;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        .image-container {
-            margin: 2rem 0;
-            position: relative;
-            display: inline-block;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-        }
-        img:hover {
-            transform: scale(1.02);
-        }
-        .prompt-display {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1rem 0;
-            border-left: 4px solid #1e88e5;
-            font-style: italic;
-        }
-        .footer {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: #666;
-        }
-        .sparkle {
-            font-size: 1.5rem;
-            animation: sparkle 2s infinite;
-        }
-        @keyframes sparkle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-        @media (max-width: 600px) {
-            body { padding: 1rem; }
-            .container { padding: 1rem; }
-            h1 { font-size: 2rem; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>${t.title} <span class="sparkle">✨</span></h1>
-        <p style="font-size: 1.2rem; color: #666;">${t.description}</p>
-        
-        <div class="image-container">
-            <img src="${imageUrl}" alt="AI Generated Art" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIExvYWRpbmc8L3RleHQ+PC9zdmc+';">
-        </div>
-        
-        <div class="prompt-display">
-            <strong>${t.prompt}:</strong> "${prompt}"
-        </div>
-        
-        <div class="footer">
-            ${t.madeby} 🎨
-        </div>
-    </div>
-</body>
-</html>`;
-};
+  return Array.from(results.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([index]) => stories[index]);
+}
 
-// Validation middleware
-const validateGenerate = [
-  body('prompt')
-    .trim()
-    .isLength({ min: 3, max: 500 })
-    .withMessage('Prompt must be between 3 and 500 characters')
-    .matches(/^[a-zA-Z0-9\s\-_.,!?'"()]+$/)
-    .withMessage('Prompt contains invalid characters'),
-  body('size')
-    .isIn(['512x512', '1024x1024'])
-    .withMessage('Invalid size parameter'),
-  body('lang')
-    .optional()
-    .isIn(['en', 'he', 'es', 'fr'])
-    .withMessage('Invalid language parameter')
-];
+// API Routes
 
-// Main generate endpoint
-app.post('/generate', validateGenerate, async (req, res) => {
+// Story generation endpoint
+app.post('/api/generate-story', [
+  body('prompt').trim().isLength({ min: 5, max: 500 }).escape()
+    .withMessage('Prompt must be between 5 and 500 characters'),
+  body('age').optional().isInt({ min: 3, max: 12 })
+    .withMessage('Age must be between 3 and 12'),
+  body('theme').optional().isIn(['adventure', 'friendship', 'learning', 'animals', 'fantasy'])
+    .withMessage('Invalid theme selected')
+], async (req, res) => {
   try {
-    // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      logger.warn('Validation failed', { errors: errors.array(), ip: req.ip });
       return res.status(400).json({
-        error: 'Invalid input',
-        details: errors.array()
+        success: false,
+        errors: errors.array(),
+        suggestions: ['Check your prompt length', 'Ensure age is between 3-12', 'Select a valid theme']
       });
     }
 
-    const { prompt, size = '512x512', lang = 'en' } = req.body;
-    
-    // Kid-safe filter
-    const safetyCheck = kidSafeFilter(prompt);
-    if (!safetyCheck.safe) {
-      logger.info('Unsafe prompt filtered', { prompt, ip: req.ip });
+    const { prompt, age = 6, theme = 'adventure' } = req.body;
+
+    if (containsInappropriateContent(prompt)) {
+      logger.warn(`Inappropriate content detected in prompt: ${prompt}`);
       return res.status(400).json({
-        error: safetyCheck.reason,
-        suggestions: [
-          'A happy rainbow with clouds',
-          'A cute puppy playing in a garden',
-          'A colorful butterfly among flowers',
-          'A friendly dragon reading a book'
-        ]
+        success: false,
+        message: 'Please use kid-friendly words in your story prompt!',
+        suggestions: ['Try using positive, fun words', 'Think about adventures, animals, or friendship']
       });
     }
 
-    logger.info('Generation request', { prompt, size, lang, ip: req.ip });
+    // Simulate story generation (replace with actual AI service)
+    const story = {
+      id: Date.now(),
+      title: `The Amazing Adventure of ${prompt.split(' ')[0]}`,
+      content: `Once upon a time, there was a wonderful story about ${prompt}. This ${theme} tale was perfect for a ${age}-year-old, filled with joy, wonder, and important lessons about friendship and kindness...`,
+      age,
+      theme,
+      tags: [theme, 'kid-friendly', 'educational'],
+      createdAt: new Date().toISOString(),
+      views: 0,
+      likes: 0
+    };
 
-    // Enhance prompt for kid-friendly results
-    const enhancedPrompt = enhancePrompt(prompt, lang);
+    stories.push(story);
+    buildSearchIndex();
+
+    logger.info(`Story generated successfully: ${story.id}`);
+    res.json({ success: true, story });
+
+  } catch (error) {
+    logger.error('Story generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate story. Please try again.',
+      suggestions: ['Check your internet connection', 'Try a simpler prompt', 'Contact support if problem persists']
+    });
+  }
+});
+
+// Text search endpoint
+app.get('/api/search', [
+  query('q').trim().isLength({ min: 1, max: 100 }).escape()
+    .withMessage('Search query must be between 1 and 100 characters'),
+  query('limit').optional().isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 and 50'),
+  query('theme').optional().isIn(['adventure', 'friendship', 'learning', 'animals', 'fantasy', 'all'])
+    .withMessage('Invalid theme filter')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { q: query, limit = 10, theme } = req.query;
     
-    // Generate image using Pollinations AI (free and reliable)
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${size.split('x')[0]}&height=${size.split('x')[1]}&seed=${Math.floor(Math.random() * 1000000)}`;
+    let results = searchStories(query, parseInt(limit));
     
-    // Generate HTML with the image
-    const htmlCode = generateHTML(imageUrl, prompt, lang);
-    
-    logger.info('Generation successful', { prompt, size, lang, ip: req.ip });
+    // Apply theme filter if specified
+    if (theme && theme !== 'all') {
+      results = results.filter(story => story.theme === theme);
+    }
+
+    // Add search suggestions for empty results
+    const suggestions = results.length === 0 ? [
+      'Try different keywords',
+      'Check spelling',
+      'Use more general terms',
+      'Browse by theme instead'
+    ] : [];
+
+    logger.info(`Search performed: "${query}" - ${results.length} results`);
     
     res.json({
       success: true,
-      code: htmlCode,
-      imageUrl: imageUrl,
-      originalPrompt: prompt,
-      enhancedPrompt: enhancedPrompt
+      results,
+      total: results.length,
+      query,
+      suggestions
     });
 
   } catch (error) {
-    logger.error('Generation error', { 
-      error: error.message, 
-      stack: error.stack, 
-      prompt: req.body.prompt,
-      ip: req.ip 
-    });
-    
+    logger.error('Search error:', error);
     res.status(500).json({
-      error: 'Something went wrong! Please try again.',
-      translations: {
-        en: 'Something went wrong! Please try again.',
-        he: 'משהו השתבש! אנא נסה שוב.',
-        es: '¡Algo salió mal! Por favor, inténtalo de nuevo.',
-        fr: 'Quelque chose s\'est mal passé ! Veuillez réessayer.'
-      }
+      success: false,
+      message: 'Search failed. Please try again.',
+      suggestions: ['Check your search terms', 'Try again in a moment']
     });
   }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    version: '2.0.0'
-  });
+// Video generation endpoint
+app.post('/api/generate-video', upload.array('images', 10), [
+  body('storyId').optional().isInt().withMessage('Invalid story ID'),
+  body('title').trim().isLength({ min: 1, max: 100 }).escape()
+    .withMessage('Title must be between 1 and 100 characters'),
+  body('text').trim().isLength({ min: 10, max: 1000 }).escape()
+    .withMessage('Text must be between 10 and 1000 characters'),
+  body('style').optional().isIn(['animated', 'slideshow', 'kinetic-text', 'storybook'])
+    .withMessage('Invalid video style'),
+  body('duration').optional().isInt({ min: 5, max: 60 })
+    .withMessage('Duration must be between 5 and 60 seconds')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { 
+      storyId, 
+      title, 
+      text, 
+      style = 'slideshow', 
+      duration = 30 
+    } = req.body;
+
+    if (containsInappropriateContent(text) || containsInappropriateContent(title)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please use kid-friendly content for video generation!',
+        suggestions: ['Use positive, educational content', 'Avoid scary or inappropriate themes']
+      });
+    }
+
+    // Simulate video generation process
+    const videoJob = {
+      id: `video_${Date.now()}`,
+      title,
+      text,
+      style,
+      duration,
+      status: 'processing',
+      progress: 0,
+      createdAt: new Date().toISOString(),
+      images: req.files ? req.files.map(file => file.filename) : [],
+      storyId: storyId || null
+    };
+
+    // In a real implementation, you would:
+    // 1. Queue the video generation job
+    // 2. Use services like FFmpeg, Canvas API, or external APIs
+    // 3. Process images and text into video
+    // 4. Return job status and eventually the video URL
+
+    logger.info(`Video generation started: ${videoJob.id}`);
+    
+    // Simulate processing time
+    setTimeout(() => {
+      videoJob.status = 'completed';
+      videoJob.progress = 100;
+      videoJob.videoUrl = `/videos/${videoJob.id}.mp4`;
+    }, 5000);
+
+    res.json({
+      success: true,
+      job: videoJob,
+      message: 'Video generation started! Check status with the job ID.',
+      estimatedTime: '30-60 seconds'
+    });
+
+  } catch (error) {
+    logger.error('Video generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Video generation failed. Please try again.',
+      suggestions: ['Check file formats', 'Reduce content length', 'Try again later']
+    });
+  }
 });
 
-// Serve static files for development
-if (process.env.NODE_ENV !== 'production') {
-  app.use(express.static('public'));
-}
+// Video status endpoint
+app.get('/api/video-status/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    // In production, query your job queue/database
+    // For demo, return mock status
+    res.json({
+      success: true,
+      job: {
+        id: jobId,
+        status: 'completed',
+        progress: 100,
+        videoUrl: `/videos/${jobId}.mp4`,
+        createdAt: new Date().toISOString()
+      }
+    });
 
-// Global error handler
+  } catch (error) {
+    logger.error('Video status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get video status'
+    });
+  }
+});
+
+// Get all stories with pagination
+app.get('/api/stories', [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
+  query('theme').optional().isIn(['adventure', 'friendship', 'learning', 'animals', 'fantasy', 'all'])
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const theme = req.query.theme;
+    
+    let filteredStories = stories;
+    if (theme && theme !== 'all') {
+      filteredStories = stories.filter(story => story.theme === theme);
+    }
+    
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedStories = filteredStories.slice(startIndex, endIndex);
+    
+    res.json({
+      success: true,
+      stories: paginatedStories,
+      pagination: {
+        current: page,
+        limit,
+        total: filteredStories.length,
+        pages: Math.ceil(filteredStories.length / limit)
+      }
+    });
+
+  } catch (error) {
+    logger.error('Get stories error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve stories'
+    });
+  }
+});
+
+// Error handling middleware
 app.use((error, req, res, next) => {
-  logger.error('Unhandled error', { 
-    error: error.message, 
-    stack: error.stack,
-    url: req.url,
-    method: req.method,
-    ip: req.ip
-  });
+  logger.error('Unhandled error:', error);
+  
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 50MB.',
+        suggestions: ['Compress your images', 'Use smaller files']
+      });
+    }
+  }
   
   res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    success: false,
+    message: 'Something went wrong! Please try again.',
+    suggestions: ['Refresh the page', 'Check your connection', 'Contact support']
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  logger.warn('404 Not Found', { url: req.url, method: req.method, ip: req.ip });
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found',
+    suggestions: ['Check the URL', 'View API documentation']
+  });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
+// Initialize server
+async function startServer() {
+  try {
+    // Create necessary directories
+    await fs.mkdir('logs', { recursive: true });
+    await fs.mkdir('uploads', { recursive: true });
+    await fs.mkdir('public/videos', { recursive: true });
+    
+    app.listen(PORT, () => {
+      logger.info(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📝 Logs directory: ./logs/`);
+      console.log(`📁 Uploads directory: ./uploads/`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-
-app.listen(PORT, () => {
-  logger.info(`🚀 AI Kid Code Backend running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-module.exports = app;
-
-
-app.listen(port, () => {
-  console.log('Server running on port ' + port);
-});
-
+startServer();
