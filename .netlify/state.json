@@ -1,0 +1,19 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Bnei Brak",
+			"country": {
+				"code": "IL",
+				"name": "Israel"
+			},
+			"subdivision": {
+				"code": "TA",
+				"name": "Tel Aviv"
+			},
+			"timezone": "Asia/Jerusalem",
+			"latitude": 32.0837,
+			"longitude": 34.8282
+		},
+		"timestamp": 1754957112148
+	}
+}
