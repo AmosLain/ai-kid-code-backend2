@@ -8,25 +8,15 @@ const rateLimit = require('express-rate-limit');
 const { OpenAI } = require('openai');
 const app = express();               // create the app instance
 
-// Serve static files from the public folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Set port from environment or default to 10000
+app.use(express.static('public'));
 const port = process.env.PORT || 10000;
 
-// Security middleware with basic Content Security Policy
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-    },
-  },
-}));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Handle all routes with index.html from public folder
+// Security middleware - must come before other middleware
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -52,7 +42,7 @@ app.use('/generate', limiter);
 const corsOptions = {
   origin: process.env.CORS_ORIGIN ? 
     process.env.CORS_ORIGIN.split(',') : 
-    ['http://localhost:3000', 'http://127.0.0.1:5500'],
+    ['http://localhost:3000', 'http://localhost:8000', 'http://127.0.0.1:5500'],
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -191,18 +181,32 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
       </div>
       
       <style>
-        @keyframes bounceIn {
-          0% { transform: scale(0.3); opacity: 0; }
-          50% { transform: scale(1.05); }
-          70% { transform: scale(0.9); }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes zoomIn {
+          from { 
+            transform: scale(0.3) rotate(-10deg); 
+            opacity: 0; 
+          }
+          to { 
+            transform: scale(1) rotate(0deg); 
+            opacity: 1; 
+          }
         }
         
-        @keyframes zoomIn {
-          0% { transform: scale(0.3); opacity: 0; }
-          50% { transform: scale(1.05); }
-          70% { transform: scale(0.9); }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes bounceIn {
+          0% { 
+            transform: scale(0.3); 
+            opacity: 0; 
+          }
+          50% { 
+            transform: scale(1.05); 
+          }
+          70% { 
+            transform: scale(0.9); 
+          }
+          100% { 
+            transform: scale(1); 
+            opacity: 1; 
+          }
         }
         
         @keyframes pulse {
@@ -431,6 +435,9 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
+});
 app.listen(port, () => {
   console.log(`🚀 AI Kid Code Backend Server started successfully!`);
   console.log(`📍 Server running on port ${port}`);

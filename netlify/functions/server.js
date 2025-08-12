@@ -1,18 +1,11 @@
-// Load environment variables first
-require('dotenv').config();
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { OpenAI } = require('openai');
-const app = express();               // create the app instance
+const serverless = require('serverless-http');
 
-// Serve static files from the public folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Set port from environment or default to 10000
-const port = process.env.PORT || 10000;
+const app = express();
 
 // Security middleware with basic Content Security Policy
 app.use(helmet({
@@ -26,15 +19,10 @@ app.use(helmet({
   },
 }));
 
-// Handle all routes with index.html from public folder
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // Rate limiting - prevent API abuse
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 10, // 10 requests per 15 minutes per IP
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 requests per 15 minutes per IP
   message: {
     code: createErrorHTML(
       'Too many requests from your IP address.',
@@ -48,17 +36,17 @@ const limiter = rateLimit({
 // Apply rate limiting to the generate endpoint
 app.use('/generate', limiter);
 
-// CORS configuration - restrict to specific origins in production
+// CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGIN ? 
     process.env.CORS_ORIGIN.split(',') : 
-    ['http://localhost:3000', 'http://127.0.0.1:5500'],
+    ['http://localhost:3000', 'http://127.0.0.1:5500', 'https://enterhere.vip'],
   credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Body parsing with size limits
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -109,7 +97,6 @@ function isKidFriendly(prompt) {
     'kill', 'hurt', 'fight', 'war', 'monster', 'ghost', 'demon',
     'nightmare', 'terror', 'horror', 'evil', 'dark', 'destroy'
   ];
-  
   const lowerPrompt = prompt.toLowerCase();
   return !inappropriateWords.some(word => lowerPrompt.includes(word));
 }
@@ -129,13 +116,11 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
                 color:#004d40; text-align:center; padding:2rem; 
                 border-radius:20px; box-shadow:0 8px 32px rgba(0,77,64,0.2);
                 max-width:800px; margin:0 auto;">
-      
       <h2 style="color:#00796b; margin:0 0 1.5rem 0; font-size:2.2rem; 
                  text-shadow:2px 2px 4px rgba(0,121,107,0.3);
                  animation: bounceIn 1s ease-out;">
         🎨 Your Amazing AI Creation! ✨
       </h2>
-      
       <div style="position:relative; display:inline-block; margin:1rem 0;">
         <img src="${imageUrl}" 
              alt="AI-Generated Image for Kids" 
@@ -147,7 +132,6 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
                     transition:transform 0.3s ease;"
              onmouseover="this.style.transform='scale(1.02)'"
              onmouseout="this.style.transform='scale(1)'">
-        
         <div style="position:absolute; top:-10px; right:-10px; 
                     background:#ff6b6b; color:white; 
                     border-radius:50%; width:40px; height:40px; 
@@ -156,7 +140,6 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
           ⭐
         </div>
       </div>
-      
       <div style="background:rgba(255,255,255,0.7); 
                   padding:1.5rem; border-radius:15px; 
                   margin:1.5rem 0; backdrop-filter:blur(10px);">
@@ -165,7 +148,6 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
           <em style="color:#00796b; font-size:1.05rem;">"${escapedPrompt}"</em>
         </p>
       </div>
-      
       <div style="margin-top:2rem;">
         <button onclick="window.print()" 
                 style="background:linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); 
@@ -177,7 +159,6 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255,107,107,0.4)'">
           🖨️ Print My Art
         </button>
-        
         <button onclick="navigator.share ? navigator.share({title: 'My AI Art', url: '${imageUrl}'}) : alert('Right-click the image to save!')" 
                 style="background:linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%); 
                        color:white; border:none; padding:12px 25px; 
@@ -189,7 +170,6 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
           📱 Share My Art
         </button>
       </div>
-      
       <style>
         @keyframes bounceIn {
           0% { transform: scale(0.3); opacity: 0; }
@@ -197,38 +177,22 @@ function createImageHTML(imageUrl, prompt, languageInstruction = '') {
           70% { transform: scale(0.9); }
           100% { transform: scale(1); opacity: 1; }
         }
-        
         @keyframes zoomIn {
           0% { transform: scale(0.3); opacity: 0; }
           50% { transform: scale(1.05); }
           70% { transform: scale(0.9); }
           100% { transform: scale(1); opacity: 1; }
         }
-        
         @keyframes pulse {
           0% { transform: scale(1); }
           50% { transform: scale(1.2); }
           100% { transform: scale(1); }
         }
-        
         @media (max-width: 600px) {
-          div[style*="font-family"] {
-            padding: 1rem !important;
-          }
-          
-          h2 {
-            font-size: 1.8rem !important;
-          }
-          
-          img {
-            max-width: 95% !important;
-          }
-          
-          button {
-            display: block !important;
-            margin: 10px auto !important;
-            width: 200px;
-          }
+          div[style*="font-family"] { padding: 1rem !important; }
+          h2 { font-size: 1.8rem !important; }
+          img { max-width: 95% !important; }
+          button { display: block !important; margin: 10px auto !important; width: 200px; }
         }
       </style>
     </div>
@@ -252,59 +216,53 @@ app.post('/generate', async (req, res) => {
   try {
     const { prompt, size, lang } = req.body;
 
-    // Comprehensive input validation
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return res.status(400).json({
         code: createErrorHTML(
           'Please provide a creative prompt for your AI art!',
-          'Tell me what you want to create - like "a happy rainbow dragon" or "a magical castle in the clouds"'
+          'Tell me what you want to create - like "a happy rainbow dragon"'
         )
       });
     }
 
-    // Validate prompt length (DALL-E has limits)
     if (prompt.length > 1000) {
       return res.status(400).json({
         code: createErrorHTML(
           'Your prompt is too long!',
-          'Please keep your creative idea under 1000 characters'
+          'Please keep it under 1000 characters'
         )
       });
     }
 
-    // Check for kid-friendly content
     if (!isKidFriendly(prompt)) {
       return res.status(400).json({
         code: createErrorHTML(
           'Let\'s keep it fun and friendly! 😊',
-          'Try describing something happy, colorful, or magical instead'
+          'Try something happy, colorful, or magical'
         )
       });
     }
 
-    // Validate size parameter
     const validSizes = ['512x512', '1024x1024'];
     if (size && !validSizes.includes(size)) {
       return res.status(400).json({
         code: createErrorHTML(
           'Invalid image size selected',
-          'Please choose either "Fast" or "Detailed" option'
+          'Choose "Small" or "Large"'
         )
       });
     }
 
-    // Validate language parameter
     const validLanguages = ['en', 'he', 'es', 'fr'];
     if (lang && !validLanguages.includes(lang)) {
       return res.status(400).json({
         code: createErrorHTML(
-          'Unsupported language selected',
-          'Available languages: English, Hebrew, Spanish, French'
+          'Unsupported language',
+          'Use English, Hebrew, Spanish, or French'
         )
       });
     }
 
-    // Map user size choice to actual API calls
     let imageModel, imageSize;
     if (size === '512x512') {
       imageModel = 'dall-e-2';
@@ -314,14 +272,12 @@ app.post('/generate', async (req, res) => {
       imageSize = '1024x1024';
     }
 
-    // Build language instruction
     const languageNames = { he: 'Hebrew', es: 'Spanish', fr: 'French' };
     const fullLang = languageNames[lang] || (lang === 'en' ? 'English' : null);
     const languageInstruction = fullLang && fullLang !== 'English' 
       ? `Respond in ${fullLang}` 
       : '';
 
-    // Log the request (without sensitive data)
     console.log(`[${new Date().toISOString()}] Image generation request:`, {
       promptLength: prompt.length,
       promptPreview: prompt.substring(0, 50) + (prompt.length > 50 ? '...' : ''),
@@ -331,20 +287,18 @@ app.post('/generate', async (req, res) => {
       ip: req.ip
     });
 
-    // Generate image with OpenAI
     const imageResponse = await openai.images.generate({
       model: imageModel,
       prompt: prompt,
       n: 1,
       size: imageSize,
-      quality: imageModel === 'dall-e-3' ? 'standard' : undefined, // Only for DALL-E 3
-      style: imageModel === 'dall-e-3' ? 'natural' : undefined, // Only for DALL-E 3
+      quality: imageModel === 'dall-e-3' ? 'standard' : undefined,
+      style: imageModel === 'dall-e-3' ? 'natural' : undefined,
     });
 
     const imageUrl = imageResponse.data[0].url;
     const processingTime = Date.now() - startTime;
 
-    // Log successful generation
     console.log(`[${new Date().toISOString()}] Image generated successfully:`, {
       model: imageModel,
       size: imageSize,
@@ -352,7 +306,6 @@ app.post('/generate', async (req, res) => {
       url: imageUrl ? 'Generated' : 'Failed'
     });
 
-    // Return success response with styled HTML
     return res.json({ 
       code: createImageHTML(imageUrl, prompt, languageInstruction),
       metadata: {
@@ -365,8 +318,6 @@ app.post('/generate', async (req, res) => {
 
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    
-    // Log the error
     console.error(`[${new Date().toISOString()}] Image generation error:`, {
       error: error.message,
       code: error.code,
@@ -375,7 +326,6 @@ app.post('/generate', async (req, res) => {
       prompt: req.body.prompt ? req.body.prompt.substring(0, 50) : 'undefined'
     });
 
-    // Handle specific OpenAI errors
     let errorMessage = 'Something went wrong creating your AI art';
     let errorDetails = '';
 
@@ -390,7 +340,7 @@ app.post('/generate', async (req, res) => {
       errorDetails = 'Please wait a moment and try again';
     } else if (error.message && error.message.includes('content_policy_violation')) {
       errorMessage = 'Let\'s try a different creative idea! 🎨';
-      errorDetails = 'The AI couldn\'t create that image. Try something fun and colorful instead!';
+      errorDetails = 'Try something fun and colorful instead!';
     }
 
     return res.status(500).json({
@@ -408,7 +358,7 @@ app.use('*', (req, res) => {
   res.status(404).json({
     code: createErrorHTML(
       'Page not found! 🔍',
-      'This endpoint doesn\'t exist. Try using /generate for creating AI art!'
+      'Try using /generate for creating AI art!'
     )
   });
 });
@@ -421,22 +371,12 @@ app.use((error, req, res, next) => {
     url: req.url,
     method: req.method
   });
-
   res.status(500).json({
     code: createErrorHTML(
       'Something unexpected happened! 😅',
-      'Our developers have been notified. Please try again in a moment.'
+      'Please try again in a moment.'
     )
   });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`🚀 AI Kid Code Backend Server started successfully!`);
-  console.log(`📍 Server running on port ${port}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔐 CORS enabled for: ${process.env.CORS_ORIGIN || 'localhost origins'}`);
-  console.log(`⚡ Rate limiting: ${process.env.RATE_LIMIT_MAX || 10} requests per ${(process.env.RATE_LIMIT_WINDOW || 900000) / 60000} minutes`);
-  console.log(`📊 Health check available at: http://localhost:${port}/health`);
-  console.log(`🎨 Ready to generate amazing AI art for kids!`);
-});
+module.exports.handler = serverless(app);
